@@ -11,15 +11,18 @@
 [![made with python](https://img.shields.io/badge/Made%20with-Python-007ec6.svg)](https://www.python.org/)
 [![black](https://img.shields.io/badge/Code%20Style-black-000.svg)](https://github.com/psf/black)
 
-Asynchronous Python Among Us Client
-
 </div>
 
 ## Note
 > This repository is mirrored from [Gitlab][gitlab-repo] to [Github][github-repo].
-> 
-> Most features like Issues, MRs etc. are disabled on [Github][github-repo], please use the
+> Most features like Issues, MRs/PRs etc. are disabled on [Github][github-repo], please use the
 > [Gitlab repository][gitlab-repo] for these
+
+## Info
+AmongUsIO is an asynchronous Among Us client written in Python. 
+It tries to expose methods for features of the official Among Us client, like meeting starts and ends
+
+Made by reverse engineering with [Wireshark](https://www.wireshark.org/) and by reading the source code of an [unofficial Among Us server][impostor/impostor]
 
 ## Installation
 ```sh
@@ -41,10 +44,10 @@ client.run(region="EU")
 ```
 > see [the examples folder](examples) for more
 
-
-[gitlab-repo]: https://gitlab.com/TECHNOFAB/amongusio
-[github-repo]: https://github.com/TECHNOFAB11/amongusio
-
 ## Roadmap / TODO
 
 > see [TODO.md](TODO.md)
+
+[gitlab-repo]: https://gitlab.com/TECHNOFAB/amongusio
+[github-repo]: https://github.com/TECHNOFAB11/amongusio
+[impostor/impostor]: https://github.com/Impostor/Impostor
