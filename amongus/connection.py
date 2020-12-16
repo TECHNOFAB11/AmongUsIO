@@ -6,8 +6,9 @@ from typing import Dict
 
 import asyncio_dgram
 
-from amongus.enums import PacketType, DisconnectReason, MatchMakingTag
-from amongus.exceptions import ConnectionError
+from amongus.enums import PacketType, DisconnectReason, MatchMakingTag, RPCTag
+from amongus.eventbus import EventBus
+from amongus.exceptions import ConnectionException
 from amongus.helpers import formatHex
 from amongus.packets import (
     Packet,
@@ -15,7 +16,14 @@ from amongus.packets import (
     DisconnectPacket,
     PingPacket,
     AcknowledgePacket,
+    JoinGamePacket,
+    ReliablePacket,
+    UnreliablePacket,
+    GameDataPacket,
 )
+from amongus.packets.gamedata.scenechange import SceneChangePacket
+from amongus.packets.rpc import RPCPacket
+from amongus.queue import PacketQueue
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +57,21 @@ class Connection:
     port: int = None
     lobby_code: str = None
     region: str = None
+    game_id: int
+    host_id: int
+    client_id: int
     result = None
+    eventbus: EventBus
+    queue: PacketQueue
     _id: int = 1
     _ready: asyncio.Event = asyncio.Event()
     _reader_task: asyncio.Task = None
     _pinger_task: asyncio.Task = None
     _ack_packets: Dict[int, Packet] = {}
+
+    def __init__(self, eventbus: EventBus):
+        self.eventbus = eventbus
+        self.queue = PacketQueue()
 
     @property
     def id(self) -> int:
@@ -91,8 +108,8 @@ class Connection:
             )
         except asyncio.TimeoutError:
             logging.debug("Timeout when connecting to the server...")
-            self.result = ConnectionError(
-                DisconnectReason.Timeout, f"Timeout connecting to {host}:{port}"
+            self.result = ConnectionException(
+                f"Timeout connecting to {host}:{port}", DisconnectReason.Timeout
             )
             await self.disconnect(True)
         except Exception as e:
@@ -126,6 +143,7 @@ class Connection:
             logger.debug("Sending disconnect packet as were still connected")
             await self.send(DisconnectPacket.create())
         self.closed = not reconnect
+        self.queue.clear()
         self._reader_task.cancel()
         self._pinger_task.cancel()
         self._ready.clear()
@@ -150,6 +168,9 @@ class Connection:
         logger.debug("Disconnected, now reconnecting...")
         await self.connect(self.name, host, port)
 
+    async def wait_until_ready(self):
+        await self._ready.wait()
+
     async def send(self, packet: Packet) -> None:
         """
         Serializes and sends a packet
@@ -170,23 +191,41 @@ class Connection:
             await self._start_pinging(restart=True)
             # restart pinger as a reliable packet counts as a ping too?
 
-    async def join_game(self, lobby_code: str) -> None:
+    async def join_game(self, lobby_code: str) -> bool:
         """
-        Sends a join game request to the server
+        Sends a join game request to the server and returns True on success
 
         Args:
             lobby_code (str): The code for the game lobby
-        """
-        pass  # TODO
 
-    async def acknowledge(self, id: int) -> None:
+        Raises:
+            ConnectionException: failed to join the game, see .reason for more
+        """
+        logger.debug(f"Joining game '{lobby_code}'")
+        await self.wait_until_ready()
+        await self.send(ReliablePacket.create([JoinGamePacket.create(lobby_code)]))
+
+        result = await self.queue.wait_for(
+            lambda p: p.tag in [MatchMakingTag.JoinedGame, MatchMakingTag.JoinGame]
+        )
+
+        if result.tag == MatchMakingTag.JoinGame:
+            raise ConnectionException(
+                "Joining game failed!",
+                reason=DisconnectReason(result.values.reason),
+                custom_reason=result.values.custom_reason,
+            )
+        elif result.tag == MatchMakingTag.JoinedGame:
+            return True
+
+    async def acknowledge(self, reliable_id: int) -> None:
         """
         Sends an Acknowledge message for the given id
 
         Args:
-            id (int): The id of the message which should be acked
+            reliable_id (int): The id of the message which should be acked
         """
-        await self.send(AcknowledgePacket.create(id))
+        await self.send(AcknowledgePacket.create(reliable_id))
 
     async def on_packet(self, packet: Packet) -> None:
         """
@@ -195,29 +234,76 @@ class Connection:
         Args:
             packet (Packet): The received packet
         """
-        if packet.tag in [PacketType.Unreliable, PacketType.Reliable]:
-            logger.debug("Received (un)reliable packet, handling the contained packets")
+        if not self.ready:
+            return
+
+        if isinstance(packet, (ReliablePacket, UnreliablePacket)):
+            logger.debug(
+                f"Received "
+                f"{'reliable' if isinstance(packet, ReliablePacket) else 'unreliable'} "
+                f"packet, handling the contained packets:"
+            )
             for p in packet:
+                logger.debug(f" - {p}")
                 await self.on_packet(p)
             return
 
+        await self.queue.put(packet)
+
         if packet.tag == PacketType.Disconnect:
             logger.debug("Server sent disconnect")
-            kwargs = {}
-            if packet.values.reason == DisconnectReason.Custom:
-                kwargs.update(custom_reason=packet.values.custom_reason)
-            self.result = ConnectionError(
-                packet.values.reason, "Server disconnected.", **kwargs
+            self.result = ConnectionException(
+                "Server disconnected.",
+                packet.values.reason,
+                custom_reason=packet.values.custom_reason,
             )
             await self.disconnect(True)
         elif packet.tag == PacketType.Acknowledgement:
             logger.debug(f"Got acknowledge for id={packet.values.id}")
-            p = self._ack_packets.pop(packet.values.id)
-            # p.ack()  TODO: acknowledge and run the callback if present
+            try:
+                p = self._ack_packets.pop(packet.values.id)
+            except KeyError:
+                return
+            else:
+                ...
+                # p.ack()  TODO: acknowledge and run the callback if present
         elif packet.tag == PacketType.Ping:
             logger.debug(f"Received ping number {packet.values.id}")
         elif packet.tag == MatchMakingTag.ReselectServer:
             logger.debug("Received ReselectServer, ignoring...")
+        elif packet.tag == MatchMakingTag.Redirect:
+            logger.debug(
+                f"Received Redirect, now connecting to {packet.values.host}:"
+                f"{packet.values.port}"
+            )
+            await self.reconnect(packet.values.host, packet.values.port)
+        elif packet.tag == MatchMakingTag.JoinedGame:
+            logger.debug("Successfully joined game!")
+            self.game_id = packet.values.game_id
+            self.client_id = packet.values.client_id
+            self.host_id = packet.values.host_id
+        elif packet.tag in [MatchMakingTag.GameData, MatchMakingTag.GameDataTo]:
+            logger.debug("Received GameData, handling the contained packets...")
+            for p in packet:
+                await self.on_packet(p)
+        elif type(packet) == RPCPacket:
+            logger.debug("Received RPC data, handling the contained packets...")
+            for p in packet:
+                await self.on_packet(p)
+        elif packet.tag == RPCTag.SetStartCounter:
+            logger.debug(
+                "Received counter info, sending a SceneChange to get more data"
+            )
+            await self.send(
+                ReliablePacket.create(
+                    [
+                        GameDataPacket.create(
+                            [SceneChangePacket.create(self.client_id)],
+                            game_id=self.game_id,
+                        )
+                    ]
+                )
+            )
         else:
             logger.debug(f"Unhandled packet: {packet}")
 
@@ -281,7 +367,8 @@ class Connection:
         if not self._ready.is_set():
             self._ready.set()
             await self._start_pinging(restart=False)
-        packets = Packet.parse(data)
+            self.eventbus.dispatch("ready")
+        packets = Packet.parse(data, first_call=True)
         for packet in packets:
             if packet.reliable and not isinstance(packet, AcknowledgePacket):
                 await self.acknowledge(packet.reliable_id)

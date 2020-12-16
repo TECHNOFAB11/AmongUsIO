@@ -1,14 +1,15 @@
 # AmongUsIO
 asynchronous Python Among Us Client
 
-### Todo
-- [ ] List open lobbies
-- [ ] Join existing lobby with code
-- [ ] Add events and decorator Client.event for handling of them
-- [ ] Receive and handle movement data & expose methods to play like a normal player
-- [ ] (Support the upcoming accounts feature if possible)
+## Todo
+-  [ ] Improve documentation
+-  [ ] List open lobbies
+-  [ ] Receive and handle movement data & expose methods to play like a normal player
+-  [ ] (Support the upcoming accounts feature if possible)
 
-### In Progress
+## In Progress
 
-### Done ✓
-- [x] Connection and basic packet handling
+## Done ✓
+-  [x] Connection and basic packet handling
+-  [X] Join existing lobby with code
+-  [X] Add events and decorator Client.event for handling of them

@@ -2,6 +2,6 @@
 # -*- coding: utf-8 -*-
 __version__ = "0.0.1a"
 from .client import Client
-from .exceptions import AmongUsException, ConnectionError
+from .exceptions import AmongUsException, ConnectionException
 
-__all__ = ["Client", "AmongUsException", "ConnectionError"]
+__all__ = ["Client", "AmongUsException", "ConnectionException"]

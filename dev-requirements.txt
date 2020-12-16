@@ -1,2 +1,6 @@
--r requirements.txt
 setuptools
+flake8
+flake8-black
+sphinx
+twine
+wheel

@@ -1,6 +1,6 @@
 <div align="center">
 
-![banner](.images/banner.png)
+![banner](https://cdn.technofab.de/images/amongusio-banner.png)
 
 # AmongUsIO
 [![ci](https://gitlab.com/TECHNOFAB/amongusio/badges/master/pipeline.svg?key_text=Pipeline)](https://gitlab.com/TECHNOFAB/amongusio/-/commits/master)
@@ -39,6 +39,11 @@ python -m pip install .
 import amongus
 
 client = amongus.Client(name="Bot")
+
+@client.event
+async def on_ready():
+    # connected and ready to send commands, eg:
+    await client.join_lobby("ABCDEF")
 
 client.run(region="EU")
 ```

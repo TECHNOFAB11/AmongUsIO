@@ -18,11 +18,11 @@ class HelloPacket(Packet):
     tag = PacketType.Hello
 
     @classmethod
-    def create(cls, gameVersion: tuple, name: str) -> "Packet":
+    def create(cls, gameVersion: tuple, name: str) -> "HelloPacket":
         return cls(b"", gameVersion=gameVersion, name=name)
 
     @classmethod
-    def parse(cls, data: bytes) -> "Packet":
+    def parse(cls, data: bytes) -> "HelloPacket":
         raise NotImplementedError
 
     def serialize(self, getID: callable) -> bytes:

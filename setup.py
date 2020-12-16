@@ -38,7 +38,7 @@ extra_requirements = {
 setup(
     name='amongus',
     version=version,
-    description='Async Python Among Us Client',
+    description='Asynchronous Python Among Us Client',
     author='Technofab',
     author_email='amongusio.git@technofab.de',
     url='https://gitlab.com/TECHNOFAB/amongusio',

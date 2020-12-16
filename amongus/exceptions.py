@@ -6,11 +6,12 @@ class AmongUsException(Exception):
     pass
 
 
-class ConnectionError(AmongUsException):
+class ConnectionException(AmongUsException):
     custom_reason: str
 
-    def __init__(self, reason, message: str, **kwargs):
+    def __init__(self, message: str, reason: int, **kwargs):
         self.reason = reason
         self.message = message
-        [setattr(self, key, val) for key, val in kwargs.items()]
+        for key, val in kwargs.items():
+            setattr(self, key, val)
         super().__init__(self.message)
