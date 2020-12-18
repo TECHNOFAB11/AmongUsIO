@@ -110,5 +110,11 @@ class RPCTag(AmongUsEnum):
 
 
 class SpawnTag(AmongUsEnum):
-    none = 0
-    IsClientCharacter = 1
+    ShipStatus0 = 0
+    MeetingHud = 1
+    LobbyBehavior = 2
+    GameData = 3
+    PlayerControl = 4
+    ShipStatus1 = 5
+    ShipStatus2 = 6
+    ShipStatus3 = 7

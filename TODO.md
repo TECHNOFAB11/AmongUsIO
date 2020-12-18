@@ -7,8 +7,6 @@ asynchronous Python Among Us Client
 -  [ ] Receive and handle movement data & expose methods to play like a normal player
 -  [ ] (Support the upcoming accounts feature if possible)
 
-## In Progress
-
 ## Done ✓
 -  [x] Connection and basic packet handling
 -  [X] Join existing lobby with code

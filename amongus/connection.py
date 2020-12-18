@@ -6,7 +6,13 @@ from typing import Dict
 
 import asyncio_dgram
 
-from amongus.enums import PacketType, DisconnectReason, MatchMakingTag, RPCTag
+from amongus.enums import (
+    PacketType,
+    DisconnectReason,
+    MatchMakingTag,
+    RPCTag,
+    SpawnTag,
+)
 from amongus.eventbus import EventBus
 from amongus.exceptions import ConnectionException
 from amongus.helpers import formatHex
@@ -20,9 +26,12 @@ from amongus.packets import (
     ReliablePacket,
     UnreliablePacket,
     GameDataPacket,
+    SpawnPacket,
+    SendChatPacket,
 )
 from amongus.packets.gamedata.scenechange import SceneChangePacket
 from amongus.packets.rpc import RPCPacket
+from amongus.player import PlayerList, Player
 from amongus.queue import PacketQueue
 
 logger = logging.getLogger(__name__)
@@ -57,21 +66,25 @@ class Connection:
     port: int = None
     lobby_code: str = None
     region: str = None
-    game_id: int
-    host_id: int
-    client_id: int
+    game_id: int = None
+    host_id: int = None
+    client_id: int = None
+    net_id: int = None
     result = None
     eventbus: EventBus
     queue: PacketQueue
+    players: PlayerList
     _id: int = 1
     _ready: asyncio.Event = asyncio.Event()
     _reader_task: asyncio.Task = None
     _pinger_task: asyncio.Task = None
     _ack_packets: Dict[int, Packet] = {}
+    _player_amount: int = 0
 
     def __init__(self, eventbus: EventBus):
         self.eventbus = eventbus
         self.queue = PacketQueue()
+        self.players = PlayerList()
 
     @property
     def id(self) -> int:
@@ -218,6 +231,29 @@ class Connection:
         elif result.tag == MatchMakingTag.JoinedGame:
             return True
 
+    async def send_chat(self, message: str) -> None:
+        """
+        Sends a chat message to the server
+
+        Args:
+            message (str): The message to send
+        """
+        logger.debug(f"Sending chat message: {message}")
+        await self.send(
+            ReliablePacket.create(
+                [
+                    GameDataPacket.create(
+                        [
+                            RPCPacket.create(
+                                [SendChatPacket.create(message)], net_id=self.net_id
+                            )
+                        ],
+                        game_id=self.game_id,
+                    )
+                ]
+            )
+        )
+
     async def acknowledge(self, reliable_id: int) -> None:
         """
         Sends an Acknowledge message for the given id
@@ -247,65 +283,114 @@ class Connection:
                 logger.debug(f" - {p}")
                 await self.on_packet(p)
             return
-
-        await self.queue.put(packet)
-
-        if packet.tag == PacketType.Disconnect:
-            logger.debug("Server sent disconnect")
-            self.result = ConnectionException(
-                "Server disconnected.",
-                packet.values.reason,
-                custom_reason=packet.values.custom_reason,
-            )
-            await self.disconnect(True)
-        elif packet.tag == PacketType.Acknowledgement:
-            logger.debug(f"Got acknowledge for id={packet.values.id}")
-            try:
-                p = self._ack_packets.pop(packet.values.id)
-            except KeyError:
-                return
-            else:
-                ...
-                # p.ack()  TODO: acknowledge and run the callback if present
-        elif packet.tag == PacketType.Ping:
-            logger.debug(f"Received ping number {packet.values.id}")
-        elif packet.tag == MatchMakingTag.ReselectServer:
-            logger.debug("Received ReselectServer, ignoring...")
-        elif packet.tag == MatchMakingTag.Redirect:
-            logger.debug(
-                f"Received Redirect, now connecting to {packet.values.host}:"
-                f"{packet.values.port}"
-            )
-            await self.reconnect(packet.values.host, packet.values.port)
-        elif packet.tag == MatchMakingTag.JoinedGame:
-            logger.debug("Successfully joined game!")
-            self.game_id = packet.values.game_id
-            self.client_id = packet.values.client_id
-            self.host_id = packet.values.host_id
-        elif packet.tag in [MatchMakingTag.GameData, MatchMakingTag.GameDataTo]:
-            logger.debug("Received GameData, handling the contained packets...")
-            for p in packet:
-                await self.on_packet(p)
         elif type(packet) == RPCPacket:
             logger.debug("Received RPC data, handling the contained packets...")
             for p in packet:
                 await self.on_packet(p)
-        elif packet.tag == RPCTag.SetStartCounter:
-            logger.debug(
-                "Received counter info, sending a SceneChange to get more data"
-            )
-            await self.send(
-                ReliablePacket.create(
-                    [
-                        GameDataPacket.create(
-                            [SceneChangePacket.create(self.client_id)],
-                            game_id=self.game_id,
-                        )
-                    ]
+            return
+        elif type(packet) == SpawnPacket:
+            logger.debug("Received Spawn data, handling the contained packets...")
+            for p in packet:
+                await self.on_packet(p)
+            return
+
+        await self.queue.put(packet)
+
+        if type(packet.tag) == PacketType:
+            if packet.tag == PacketType.Disconnect:
+                logger.debug("Server sent disconnect")
+                self.result = ConnectionException(
+                    "Server disconnected.",
+                    packet.values.reason,
+                    custom_reason=packet.values.custom_reason,
                 )
-            )
-        else:
-            logger.debug(f"Unhandled packet: {packet}")
+                await self.disconnect(True)
+                return
+            elif packet.tag == PacketType.Acknowledgement:
+                logger.debug(f"Got acknowledge for id={packet.values.reliable_id}")
+                try:
+                    p = self._ack_packets.pop(packet.values.reliable_id)
+                except KeyError:
+                    return
+                else:
+                    ...
+                    # p.ack()  TODO: acknowledge and run the callback if present
+                return
+            elif packet.tag == PacketType.Ping:
+                logger.debug(f"Received ping number {packet.values.reliable_id}")
+                return
+        elif type(packet.tag) == MatchMakingTag:
+            if packet.tag == MatchMakingTag.ReselectServer:
+                logger.debug("Received ReselectServer, ignoring...")
+                return
+            elif packet.tag == MatchMakingTag.Redirect:
+                logger.debug(
+                    f"Received Redirect, now connecting to {packet.values.host}:"
+                    f"{packet.values.port}"
+                )
+                await self.reconnect(packet.values.host, packet.values.port)
+                return
+            elif packet.tag == MatchMakingTag.JoinedGame:
+                logger.debug("Successfully joined game!")
+                self.game_id = packet.values.game_id
+                self.client_id = packet.values.client_id
+                self.host_id = packet.values.host_id
+                self.eventbus.dispatch("game_join", self.lobby_code)
+                return
+            elif packet.tag in [MatchMakingTag.GameData, MatchMakingTag.GameDataTo]:
+                if (
+                    packet.tag == MatchMakingTag.GameDataTo
+                    and packet.values.target != self.client_id
+                ):
+                    logger.debug("Received GameDataTo which is not for us")
+                    return
+                logger.debug("Received GameData, handling the contained packets...")
+                for p in packet:
+                    await self.on_packet(p)
+                return
+        elif type(packet.tag) == RPCTag:
+            if packet.tag == RPCTag.SetStartCounter:
+                logger.debug(
+                    "Received counter info, sending a SceneChange to get more data"
+                )
+                await self.send(
+                    ReliablePacket.create(
+                        [
+                            GameDataPacket.create(
+                                [SceneChangePacket.create(self.client_id)],
+                                game_id=self.game_id,
+                            )
+                        ]
+                    )
+                )
+                return
+            elif packet.tag == RPCTag.SendChat:
+                sender = packet.parent.values.net_id
+                self.eventbus.dispatch(
+                    "chat", packet.values.message, self.players.from_net_id(sender),
+                )
+                return
+        elif type(packet.tag) == SpawnTag:
+            if packet.tag == SpawnTag.GameData:
+                logger.debug(f"Received player data! {packet}")
+                self._player_amount = packet.values.num_players
+                self.players + packet.values.players
+                if len(self.players) == self._player_amount:
+                    self.eventbus.dispatch("player_data_update", list(self.players))
+                return
+            elif packet.tag == SpawnTag.PlayerControl:
+                logger.debug(f"Received PlayerControl data: {packet}")
+                if packet.parent.values.owner == self.client_id:
+                    self.net_id = packet.values.net_id
+                    return
+                player = self.players[packet.values.player_id]
+                if player is None:
+                    player = Player()
+                    player.id = packet.values.player_id
+                    self.players + player
+                player.net_id = packet.values.net_id
+                return
+        logger.debug(f"Unhandled packet: {packet}")
 
     async def _start_pinging(self, restart: bool = True) -> None:
         """
@@ -347,7 +432,7 @@ class Connection:
         """
         while not self.closed:
             try:
-                data, host = await asyncio.wait_for(
+                data, _ = await asyncio.wait_for(
                     self.socket.recv(), timeout=self.recvTimeout / 1000
                 )
                 asyncio.ensure_future(self._on_data(data))

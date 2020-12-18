@@ -10,12 +10,12 @@ class AcknowledgePacket(Packet):
     tag = PacketType.Acknowledgement
 
     @classmethod
-    def create(cls, id: int) -> "AcknowledgePacket":
-        return cls(b"", id=id)
+    def create(cls, reliable_id: int) -> "AcknowledgePacket":
+        return cls(b"", reliable_id=reliable_id)
 
     @classmethod
     def parse(cls, data: bytes) -> Tuple["AcknowledgePacket", bytes]:
-        return cls(data, id=unpack({data[:2]: ">h"})), b""
+        return cls(data, reliable_id=unpack({data[:2]: ">h"})), b""
 
     def serialize(self, getID: callable) -> bytes:
-        return bytes([self.tag]) + pack({self.values.id: ">h"}) + bytes([255])
+        return bytes([self.tag]) + pack({self.values.reliable_id: ">h"}) + bytes([255])

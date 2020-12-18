@@ -16,8 +16,8 @@ from .matchmaking import (
     AlterGamePacket,
 )
 from .gamedata import GameDataPacket, SceneChangePacket
-from .rpc import RPCPacket, SetStartCounterPacket
-from .spawn import SpawnPacket
+from .rpc import RPCPacket, SetStartCounterPacket, SendChatPacket
+from .spawn import SpawnPacket, PlayerControlSpawnPacket, GameDataSpawnPacket
 
 __all__ = [
     "Packet",
@@ -38,4 +38,7 @@ __all__ = [
     "RPCPacket",
     "SetStartCounterPacket",
     "SpawnPacket",
+    "PlayerControlSpawnPacket",
+    "SendChatPacket",
+    "GameDataSpawnPacket",
 ]

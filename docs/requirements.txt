@@ -1,0 +1,6 @@
+releases
+sphinx
+sphinxcontrib_trio
+sphinx_rtd_theme
+sphinx-notfound-page
+sphinx-autobuild

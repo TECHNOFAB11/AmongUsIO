@@ -10,15 +10,15 @@ class PingPacket(Packet):
     tag = PacketType.Ping
 
     @classmethod
-    def create(cls, id: int) -> "PingPacket":
-        return cls(b"", id=id)
+    def create(cls, reliable_id: int) -> "PingPacket":
+        return cls(b"", reliable_id=reliable_id)
 
     @classmethod
     def parse(cls, data: bytes) -> Tuple["PingPacket", bytes]:
         _id = unpack({data[:2]: ">h"})
-        p = cls(data, id=_id)
+        p = cls(data, reliable_id=_id)
         p.reliable_id = _id
         return p, b""
 
     def serialize(self, getID: callable) -> bytes:
-        return bytes([self.tag]) + pack({self.values.id: ">h"})
+        return bytes([self.tag]) + pack({self.values.reliable_id: ">h"})

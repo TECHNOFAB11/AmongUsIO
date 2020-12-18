@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from .base import GameDataPacket
 from ...enums import GameDataTag
-from ...helpers import pack
+from ...helpers import writeString, createPacked
 
 
 class SceneChangePacket(GameDataPacket):
@@ -17,4 +17,8 @@ class SceneChangePacket(GameDataPacket):
         raise NotImplementedError
 
     def serialize(self, getID: callable) -> bytes:
-        return bytes([self.tag]) + pack({self.values.client_id: "I"}) + b"OnlineGame"
+        return (
+            bytes([self.tag])
+            + createPacked(self.values.client_id)
+            + writeString("OnlineGame")
+        )

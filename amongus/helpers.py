@@ -99,3 +99,19 @@ def readPacked(data: bytes) -> Tuple[int, bytes]:
         shift += 7
 
     return output, rest
+
+
+def writeString(data: str):
+    data = bytes(data.encode())
+    return createPacked(len(data)) + data
+
+
+def readString(data: bytes):
+    length, _data = readPacked(data)
+    return _data[:length].decode(), _data[length:]
+
+
+def readMessage(data: bytes):
+    length = unpack({data[0:2]: ">h"})
+    tag = data[2]
+    return tag, data[3 : length + 3], data[length + 3 :]

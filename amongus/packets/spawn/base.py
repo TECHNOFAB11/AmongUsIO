@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 import logging
 from amongus.enums import GameDataTag
-from amongus.packets import Packet
+from amongus.helpers import readPacked, formatHex
+from amongus.packets import GameDataPacket
 
 logger = logging.getLogger(__name__)
 
 
-class SpawnPacket(Packet):
+class SpawnPacket(GameDataPacket):
     tag = GameDataTag.SpawnFlag
 
     @classmethod
@@ -17,20 +18,24 @@ class SpawnPacket(Packet):
     @classmethod
     def parse(cls, data: bytes) -> "SpawnPacket":
         result = None
-        tag = data[0]
+        spawn_id, _data = readPacked(data)
+        owner, _data = readPacked(_data)
+        flags = _data[0]
+        component_length, _data = readPacked(_data[1:])
+
+        packet = cls(data, owner=owner, flags=flags, component_length=component_length)
 
         for p in SpawnPacket.__subclasses__():
-            if p.tag == tag:
-                result = [p.parse(data)]
+            if p.tag == spawn_id:
+                result = p.parse(_data)
                 break
 
-        if result is None:
-            logger.debug(f"Could not find a Spawn packet which can parse '{tag}'")
-            logger.debug(
-                f"Available packets: "
-                f"{', '.join(p.__name__ for p in SpawnPacket.__subclasses__())}"
-            )
-        return cls(data)
+        if result is not None:
+            packet.add_packet(result)
+        else:
+            logger.debug(f"Could not find a Spawn packet which can parse '{spawn_id}'")
+            logger.debug(f"Data: {formatHex(_data)}")
+        return packet
 
     def serialize(self, getID: callable) -> bytes:
         raise NotImplementedError

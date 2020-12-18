@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import re
+from ipaddress import ip_address
 from typing import Any, Union, Callable
-
 from amongus.eventbus import EventBus
 from amongus.exceptions import AmongUsException
 from amongus.connection import Connection
@@ -11,6 +11,16 @@ from amongus.regions import regions
 
 
 class Client:
+    """
+    The main client used to interact with the Among Us servers
+
+    Attributes:
+        name (str): The current name of the user
+        stopped (bool): If the client is stopped (= connection closed)
+        lobby_code (str): The current game lobby code (normally 6 chars long)
+        region (str): The current region to which the client is connected to
+    """
+
     name: str
     connection: Connection
     eventbus: EventBus
@@ -62,16 +72,23 @@ class Client:
 
     def run(self, *args, **kwargs) -> Any:
         """
-        Helper function which runs :meth:Client.start
+        Helper function which runs :meth:`Client.start`
 
-        All arguments will be passed to :meth:Client.start
-        This will block until the connection is closed from either side
+        All arguments will be passed to :meth:`Client.start`,
+        this will block until the connection is closed from either side
         """
         return asyncio.get_event_loop().run_until_complete(self.start(*args, **kwargs))
 
-    def add_listener(self, event: str, func: Callable):
+    def add_listener(self, event: str, func: Callable) -> None:
         """
+        This adds a listener to the eventbus
 
+        Args:
+            event (str): The event to listen/subscribe to
+            func (Callable): The callback which will be run when the event happens
+
+        Raises:
+            TypeError: The callback is not a coroutine
         """
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Listeners must be coroutines")
@@ -81,9 +98,22 @@ class Client:
             name = "on_" + name
         self.eventbus.add_listener(name, func)
 
-    def event(self, name: Union[str, Callable] = None):
+    def remove_listener(self, func: Callable) -> None:
         """
+        Removes an event listener, doesn't do anything when it doesn't exist
 
+        Args:
+            func (Callable): The callback which should be removed as a listener
+        """
+        self.eventbus.remove_listener(func)
+
+    def event(self, name: Union[str, Callable] = None) -> Callable:
+        """
+        Decorator for :meth:`Client.add_listener`
+
+        Args:
+            name (str): Optional; The event name to listen on, if not given the
+                function name will be used
         """
 
         def decorator(func: Callable):
@@ -96,28 +126,44 @@ class Client:
 
         return decorator(name) if callable(name) else decorator
 
-    async def start(self, region: str) -> Any:
+    async def start(self, region: str = None, custom_server: str = None) -> Any:
         """
         Starts the client, connecting to the server and sleeping until disconnect
 
         Args:
-            region (str): The region where the lobby is hosted,
+            region (str): Optional; The region where the lobby is hosted,
                 see amongus.regions.regions
+            custom_server (str): Optional; A custom address to connect to, either this
+                or region has to be given. Example: `10.1.1.1:22023` or `10.1.1.1`
 
         Raises:
-            ConnectionException: Server disconnected, see ConnectionException.reason
-                for the reason and ConnectionException.custom_reason
-                if the reason is "Custom"
+            ConnectionException: Server disconnected,
+                see :attr:`ConnectionException.reason` for the reason and
+                :attr:`ConnectionException.custom_reason` if the reason is "Custom"
             AmongUsException: Invalid region
         """
-        if region.upper() not in regions:
+        if region is not None and region.upper() not in regions:
             raise AmongUsException(f"The region {region} does not exist!")
 
         self.region = region
+
+        if custom_server is not None:
+            host, s, port = custom_server.rpartition(":")
+            if not s:
+                host = port
+                port = 22023
+            try:
+                _ = ip_address(host)
+                port = int(port)
+            except ValueError:
+                # just let the user handle it
+                raise
+        else:
+            host = regions[region]
+            port = 22023
+
         try:
-            await self.connection.connect(
-                name=self.name, host=regions[region], port=22023
-            )
+            await self.connection.connect(name=self.name, host=host, port=port)
 
             while not self.stopped:
                 # only exit when we lost connection or disconnected in some other way
@@ -147,7 +193,7 @@ class Client:
         self.lobby_code = lobby_code.upper()
         return await self.connection.join_game(self.lobby_code)
 
-    async def find_games(self):
+    async def find_games(self) -> list:
         """
         Returns the currently open games/lobbies
 
@@ -166,3 +212,12 @@ class Client:
                 inform the server first
         """
         await self.connection.disconnect(force)
+
+    async def send_chat(self, message: str) -> None:
+        """
+        Sends a chat message to the server
+
+        Args:
+            message (str): The message to send
+        """
+        await self.connection.send_chat(message)

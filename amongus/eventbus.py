@@ -12,7 +12,7 @@ class EventBus:
         self.listeners[event].append(callback)
 
     def remove_listener(self, callback: callable):
-        for event, callbacks in self.listeners.items():
+        for _, callbacks in self.listeners.items():
             if callback in callbacks:
                 callbacks.pop(callback)
 
