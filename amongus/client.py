@@ -4,10 +4,10 @@ import asyncio
 import re
 from ipaddress import ip_address
 from typing import Any, Union, Callable
-from amongus.eventbus import EventBus
-from amongus.exceptions import AmongUsException
-from amongus.connection import Connection
-from amongus.regions import regions
+from .eventbus import EventBus
+from .exceptions import AmongUsException
+from .connection import Connection
+from .regions import regions
 
 
 class Client:

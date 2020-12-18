@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 import struct
 from typing import Tuple
-from amongus.enums import MatchMakingTag
-from amongus.helpers import readPacked
-from amongus.packets import Packet
+from ...enums import MatchMakingTag
+from ...helpers import readPacked
+from ...packets import Packet
 
 
 class JoinedGamePacket(Packet):

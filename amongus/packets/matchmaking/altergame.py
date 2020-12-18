@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from typing import Tuple
-from amongus.enums import MatchMakingTag
-from amongus.helpers import unpack
-from amongus.packets import Packet
+from ...enums import MatchMakingTag
+from ...helpers import unpack
+from ...packets import Packet
 
 
 class AlterGamePacket(Packet):

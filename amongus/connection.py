@@ -2,21 +2,20 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
+import asyncio_dgram
 from typing import Dict
 
-import asyncio_dgram
-
-from amongus.enums import (
+from .enums import (
     PacketType,
     DisconnectReason,
     MatchMakingTag,
     RPCTag,
     SpawnTag,
 )
-from amongus.eventbus import EventBus
-from amongus.exceptions import ConnectionException
-from amongus.helpers import formatHex
-from amongus.packets import (
+from .eventbus import EventBus
+from .exceptions import ConnectionException
+from .helpers import formatHex
+from .packets import (
     Packet,
     HelloPacket,
     DisconnectPacket,
@@ -29,10 +28,10 @@ from amongus.packets import (
     SpawnPacket,
     SendChatPacket,
 )
-from amongus.packets.gamedata.scenechange import SceneChangePacket
-from amongus.packets.rpc import RPCPacket
-from amongus.player import PlayerList, Player
-from amongus.queue import PacketQueue
+from .packets.gamedata.scenechange import SceneChangePacket
+from .packets.rpc import RPCPacket
+from .player import PlayerList, Player
+from .queue import PacketQueue
 
 logger = logging.getLogger(__name__)
 

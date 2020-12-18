@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from typing import List
-from amongus.enums import PacketType
-from amongus.helpers import formatHex
+from ..enums import PacketType
+from ..helpers import formatHex
 
 logger = logging.getLogger(__name__)
 

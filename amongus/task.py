@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from typing import Tuple
-from amongus.helpers import readPacked
+from .helpers import readPacked
 
 
 class Task:
