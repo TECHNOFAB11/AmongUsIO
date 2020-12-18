@@ -60,7 +60,7 @@ setup(
         "Topic :: Internet",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Utilities"
+        "Topic :: Utilities",
         "Typing :: Typed",
     ],
     long_description=readme,
