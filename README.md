@@ -25,6 +25,12 @@ It tries to expose methods for features of the official Among Us client, like me
 
 Made by reverse engineering with [Wireshark](https://www.wireshark.org/) and by reading the source code of an [unofficial Among Us server][impostor/impostor]
 
+## Features
+- Supports custom Among Us servers like [Impostor][impostor/impostor]
+- Join Among Us lobbies
+- Receive and send chat messages
+- Get information about the lobby and the other players
+
 ## Documentation
 - [Stable](https://amongusio.readthedocs.io/en/stable)
 - [Latest](https://amongusio.readthedocs.io/en/latest)
