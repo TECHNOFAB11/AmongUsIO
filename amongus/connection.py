@@ -2,35 +2,46 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
-import asyncio_dgram
 from typing import Dict
 
+import asyncio_dgram
+
 from .enums import (
-    PacketType,
     DisconnectReason,
+    GameSettings,
     MatchMakingTag,
+    PacketType,
+    PlayerAttributes,
     RPCTag,
     SpawnTag,
 )
 from .eventbus import EventBus
 from .exceptions import ConnectionException
+from .game import Game, GameList
 from .helpers import formatHex
 from .packets import (
-    Packet,
-    HelloPacket,
-    DisconnectPacket,
-    PingPacket,
     AcknowledgePacket,
-    JoinGamePacket,
-    ReliablePacket,
-    UnreliablePacket,
+    CheckColorPacket,
+    DisconnectPacket,
     GameDataPacket,
-    SpawnPacket,
+    GetGameListV2Packet,
+    HelloPacket,
+    JoinGamePacket,
+    Packet,
+    PingPacket,
+    ReliablePacket,
     SendChatPacket,
+    SetHatPacket,
+    SetPetPacket,
+    SetSkinPacket,
+    SpawnPacket,
+    UnreliablePacket,
 )
+from .packets.gamedata.base import GameDataToPacket
 from .packets.gamedata.scenechange import SceneChangePacket
 from .packets.rpc import RPCPacket
-from .player import PlayerList, Player
+from .packets.rpc.checkname import CheckNamePacket
+from .player import Player, PlayerList
 from .queue import PacketQueue
 
 logger = logging.getLogger(__name__)
@@ -61,6 +72,10 @@ class Connection:
     recvTimeout: int = 10000
     keepAliveTimeout: int = 1000
     name: str = None
+    color: PlayerAttributes.Color
+    hat: PlayerAttributes.Hat
+    skin: PlayerAttributes.Skin
+    pet: PlayerAttributes.Pet
     host: str = None
     port: int = None
     lobby_code: str = None
@@ -70,6 +85,7 @@ class Connection:
     client_id: int = None
     net_id: int = None
     result = None
+    game: Game
     eventbus: EventBus
     queue: PacketQueue
     players: PlayerList
@@ -84,9 +100,10 @@ class Connection:
         self.eventbus = eventbus
         self.queue = PacketQueue()
         self.players = PlayerList()
+        self.game = Game()
 
     @property
-    def id(self) -> int:
+    def reliable_id(self) -> int:
         """
         This increases the current message id and returns the old value
         """
@@ -193,7 +210,7 @@ class Connection:
         # we pass a lambda which returns the id because we dont know if the packet
         # needs the reliable id, so if it needs it and it gets called we increase the
         # id, else it just stays the same
-        await self._send(packet.serialize(lambda: self.id))
+        await self._send(packet.serialize(lambda: self.reliable_id))
         if packet.reliable:
             self._ack_packets[self._id - 1] = packet
         if packet.reliable and packet.tag not in [
@@ -213,12 +230,14 @@ class Connection:
         Raises:
             ConnectionException: failed to join the game, see .reason for more
         """
+        self.lobby_code = lobby_code
         logger.debug(f"Joining game '{lobby_code}'")
         await self.wait_until_ready()
         await self.send(ReliablePacket.create([JoinGamePacket.create(lobby_code)]))
 
         result = await self.queue.wait_for(
-            lambda p: p.tag in [MatchMakingTag.JoinedGame, MatchMakingTag.JoinGame]
+            lambda p: type(p.tag) == MatchMakingTag
+            and p.tag in [MatchMakingTag.JoinedGame, MatchMakingTag.JoinGame]
         )
 
         if result.tag == MatchMakingTag.JoinGame:
@@ -251,6 +270,41 @@ class Connection:
                     )
                 ]
             )
+        )
+
+    async def find_games(
+        self, mapId: GameSettings.Map, impostors: int, language: GameSettings.Keywords
+    ) -> GameList:
+        """"""
+        logger.debug(
+            f"Finding games... Criteria: mapId={repr(mapId)}, impostors={impostors}, "
+            f"language={repr(language)}"
+        )
+        await self.send(
+            ReliablePacket.create(
+                [
+                    GetGameListV2Packet.create(
+                        mapId=mapId, impostors=impostors, language=language
+                    )
+                ]
+            )
+        )
+        result = await self.queue.wait_for(
+            lambda p: type(p.tag) == MatchMakingTag
+            and p.tag == MatchMakingTag.GetGameListV2
+        )
+
+        for game in result.values.games:
+
+            async def _join_func():
+                await self.join_game(game.readable_code)
+
+            game.join = _join_func
+        return GameList(
+            games=result.values.games,
+            skeld_count=result.values.skeld_count,
+            mirahq_count=result.values.mirahq_count,
+            polus_count=result.values.polus_count,
         )
 
     async def acknowledge(self, reliable_id: int) -> None:
@@ -312,8 +366,7 @@ class Connection:
                 except KeyError:
                     return
                 else:
-                    ...
-                    # p.ack()  TODO: acknowledge and run the callback if present
+                    p.ack()
                 return
             elif packet.tag == PacketType.Ping:
                 logger.debug(f"Received ping number {packet.values.reliable_id}")
@@ -330,11 +383,11 @@ class Connection:
                 await self.reconnect(packet.values.host, packet.values.port)
                 return
             elif packet.tag == MatchMakingTag.JoinedGame:
-                logger.debug("Successfully joined game!")
+                logger.info(f"Successfully joined game '{self.lobby_code}'!")
+                self.eventbus.dispatch("game_join", self.lobby_code)
                 self.game_id = packet.values.game_id
                 self.client_id = packet.values.client_id
                 self.host_id = packet.values.host_id
-                self.eventbus.dispatch("game_join", self.lobby_code)
                 return
             elif packet.tag in [MatchMakingTag.GameData, MatchMakingTag.GameDataTo]:
                 if (
@@ -346,6 +399,16 @@ class Connection:
                 logger.debug("Received GameData, handling the contained packets...")
                 for p in packet:
                     await self.on_packet(p)
+                return
+            elif packet.tag == MatchMakingTag.AlterGame:
+                logger.debug(f"Received AlterGame: {packet}")
+                self.game.public = packet.values.public
+                return
+            elif packet.tag == MatchMakingTag.GetGameListV2:
+                # handled with queue.wait_for
+                return
+            elif packet.tag == MatchMakingTag.JoinGame:
+                # handled with queue.wait_for
                 return
         elif type(packet.tag) == RPCTag:
             if packet.tag == RPCTag.SetStartCounter:
@@ -366,14 +429,39 @@ class Connection:
             elif packet.tag == RPCTag.SendChat:
                 sender = packet.parent.values.net_id
                 self.eventbus.dispatch(
-                    "chat", packet.values.message, self.players.from_net_id(sender),
+                    "chat",
+                    packet.values.message,
+                    self.players.from_net_id(sender),
                 )
+                return
+            elif packet.tag == RPCTag.SyncSettings:
+                logger.debug("Received settings")
+                packet.values.game.public = self.game.public
+                self.game = packet.values.game
+                self.eventbus.dispatch("game_settings", self.game)
+                return
+            elif packet.tag == RPCTag.UpdateGameData:
+                logger.debug(f"Received UpdateGameData: {packet}")
+                # i have no idea what this one is for, its just completely empty when i
+                # tested it (only the player id is right, everything else is 0)
+                return
+            elif packet.tag == RPCTag.SetName:
+                if packet.values.name is not None:
+                    logger.debug(f"Got our name: {packet.values.name}")
+                    self.name = packet.values.name
+                    self.eventbus.dispatch("name_update", self.name)
+                return
+            elif packet.tag == RPCTag.SetColor:
+                if PlayerAttributes.Color.has_value(packet.values.color):
+                    logger.debug(f"Got color: {packet.values.color}")
+                    self.color = PlayerAttributes.Color(packet.values.color)
+                    self.eventbus.dispatch("color_update", self.color)
                 return
         elif type(packet.tag) == SpawnTag:
             if packet.tag == SpawnTag.GameData:
                 logger.debug(f"Received player data! {packet}")
                 self._player_amount = packet.values.num_players
-                self.players + packet.values.players
+                self.players += packet.values.players
                 if len(self.players) == self._player_amount:
                     self.eventbus.dispatch("player_data_update", list(self.players))
                 return
@@ -381,15 +469,84 @@ class Connection:
                 logger.debug(f"Received PlayerControl data: {packet}")
                 if packet.parent.values.owner == self.client_id:
                     self.net_id = packet.values.net_id
-                    return
-                player = self.players[packet.values.player_id]
-                if player is None:
-                    player = Player()
-                    player.id = packet.values.player_id
-                    self.players + player
-                player.net_id = packet.values.net_id
+                else:
+                    player = self.players[packet.values.player_id]
+                    if player is None:
+                        player = Player()
+                        player.id = packet.values.player_id
+                        self.players += player
+                    player.net_id = packet.values.net_id
+
+                if self.players.complete() and self.net_id is not None:
+                    await self.send(
+                        ReliablePacket.create(
+                            [
+                                GameDataToPacket.create(
+                                    [
+                                        RPCPacket.create(
+                                            [
+                                                CheckNamePacket.create(name=self.name),
+                                            ],
+                                            net_id=self.net_id,
+                                        ),
+                                    ],
+                                    game_id=self.game_id,
+                                    target=self.host_id,
+                                )
+                            ]
+                        )
+                    )
+                    await self.send(
+                        ReliablePacket.create(
+                            [
+                                GameDataToPacket.create(
+                                    [
+                                        RPCPacket.create(
+                                            [
+                                                CheckColorPacket.create(
+                                                    color=self.color
+                                                ),
+                                            ],
+                                            net_id=self.net_id,
+                                        ),
+                                    ],
+                                    game_id=self.game_id,
+                                    target=self.host_id,
+                                )
+                            ]
+                        )
+                    )
+                    await self.send(
+                        ReliablePacket.create(
+                            [
+                                GameDataPacket.create(
+                                    [
+                                        RPCPacket.create(
+                                            [
+                                                SetPetPacket.create(pet=self.pet),
+                                            ],
+                                            net_id=self.net_id,
+                                        ),
+                                        RPCPacket.create(
+                                            [
+                                                SetHatPacket.create(hat=self.hat),
+                                            ],
+                                            net_id=self.net_id,
+                                        ),
+                                        RPCPacket.create(
+                                            [
+                                                SetSkinPacket.create(skin=self.skin),
+                                            ],
+                                            net_id=self.net_id,
+                                        ),
+                                    ],
+                                    game_id=self.game_id,
+                                )
+                            ]
+                        )
+                    )
                 return
-        logger.debug(f"Unhandled packet: {packet}")
+        logger.warning(f"Unhandled packet: {packet}")
 
     async def _start_pinging(self, restart: bool = True) -> None:
         """
@@ -399,9 +556,9 @@ class Connection:
             restart (bool): If the current task should be cancelled before starting a
                 new one
         """
-        logger.debug("Starting pinger...")
         if not self.ready:
             return
+        logger.debug("(Re)starting pinger...")
         if restart:
             self._pinger_task.cancel()
         self._pinger_task = asyncio.create_task(self._pinger())
@@ -412,7 +569,7 @@ class Connection:
         """
         while not self.closed:
             await asyncio.sleep(self.keepAliveTimeout / 1000)
-            await self.send(PingPacket.create(self.id))
+            await self.send(PingPacket.create(self.reliable_id))
 
     async def _send(self, payload: bytes) -> None:
         """

@@ -6,15 +6,15 @@ from ..base import Packet
 from ...enums import MatchMakingTag
 
 
-class ReselectServerPacket(Packet):
-    tag = MatchMakingTag.ReselectServer
+class StartGamePacket(Packet):
+    tag = MatchMakingTag.StartGame
 
     @classmethod
-    def create(cls, *args, **kwargs) -> "ReselectServerPacket":
+    def create(cls) -> "StartGamePacket":
         raise NotImplementedError
 
     @classmethod
-    def parse(cls, data: bytes) -> Tuple["ReselectServerPacket", bytes]:
+    def parse(cls, data: bytes) -> Tuple["StartGamePacket", bytes]:
         return cls(data), b""
 
     def serialize(self, getID: callable) -> bytes:

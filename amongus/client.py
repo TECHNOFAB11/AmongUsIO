@@ -3,10 +3,13 @@
 import asyncio
 import re
 from ipaddress import ip_address
-from typing import Any, Union, Callable
+from typing import Any, Callable, Union
+
+from .connection import Connection
+from .enums import GameSettings, PlayerAttributes
 from .eventbus import EventBus
 from .exceptions import AmongUsException
-from .connection import Connection
+from .game import GameList
 from .regions import regions
 
 
@@ -19,13 +22,23 @@ class Client:
         stopped (bool): If the client is stopped (= connection closed)
         lobby_code (str): The current game lobby code (normally 6 chars long)
         region (str): The current region to which the client is connected to
+        color (PlayerAttributes.Color): Color of the character
+        hat (PlayerAttributes.Hat): Hat of the character
+        skin (PlayerAttributes.Skin): Skin of the character
+        pet (PlayerAttributes.Pet): Pet of the character
     """
 
-    name: str
     connection: Connection
     eventbus: EventBus
 
-    def __init__(self, name: str):
+    def __init__(
+        self,
+        name: str,
+        color: PlayerAttributes.Color = 0,
+        hat: PlayerAttributes.Hat = 0,
+        skin: PlayerAttributes.Skin = 0,
+        pet: PlayerAttributes.Pet = 0,
+    ):
         """
         Client used to interact with the Among Us servers
 
@@ -34,6 +47,10 @@ class Client:
             stopped (bool): If the client is stopped/the connection closed
             lobby_code (str): The current lobby code
             region (str): The currrent region
+            color (PlayerAttributes.Color): Color of the character
+            hat (PlayerAttributes.Hat): Hat of the character
+            skin (PlayerAttributes.Skin): Skin of the character
+            pet (PlayerAttributes.Pet): Pet of the character
 
         Raises:
             AmongUsException: Name is longer than 10 or shorter than 1 characters
@@ -42,9 +59,13 @@ class Client:
             raise AmongUsException(
                 "Name can't be longer than 10 or shorter than 1 character(s)!"
             )
-        self.name = name
         self.eventbus = EventBus()
         self.connection = Connection(self.eventbus)
+        self.name = name
+        self.color = color
+        self.hat = hat
+        self.skin = skin
+        self.pet = pet
 
     @property
     def stopped(self) -> bool:
@@ -65,6 +86,46 @@ class Client:
     @region.setter
     def region(self, value: str) -> None:
         self.connection.region = value
+
+    @property
+    def name(self) -> str:
+        return self.connection.name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.connection.name = value
+
+    @property
+    def color(self) -> PlayerAttributes.Color:
+        return self.connection.color
+
+    @color.setter
+    def color(self, value: PlayerAttributes.Color) -> None:
+        self.connection.color = value
+
+    @property
+    def hat(self) -> PlayerAttributes.Hat:
+        return self.connection.hat
+
+    @hat.setter
+    def hat(self, value: PlayerAttributes.Hat) -> None:
+        self.connection.hat = value
+
+    @property
+    def skin(self) -> PlayerAttributes.Skin:
+        return self.connection.skin
+
+    @skin.setter
+    def skin(self, value: PlayerAttributes.Skin) -> None:
+        self.connection.skin = value
+
+    @property
+    def pet(self) -> PlayerAttributes.Pet:
+        return self.connection.pet
+
+    @pet.setter
+    def pet(self, value: PlayerAttributes.Pet) -> None:
+        self.connection.pet = value
 
     @property
     def _result(self) -> Any:
@@ -193,13 +254,29 @@ class Client:
         self.lobby_code = lobby_code.upper()
         return await self.connection.join_game(self.lobby_code)
 
-    async def find_games(self) -> list:
+    async def find_games(
+        self,
+        mapId: GameSettings.Map = GameSettings.Map.All,
+        impostors: int = 0,
+        language: GameSettings.Keywords = GameSettings.Keywords.All,
+    ) -> GameList:
         """
         Returns the currently open games/lobbies
 
-        TODO
+        Args:
+            mapId (GameSettings.Map): The wanted map
+            impostors (int): Amount of impostors (0-3, 0 being Any)
+            language (GameSettings.Keywords): Which language the chat should be
+
+        Returns:
+            :class:`GameList`
+
+        Raises:
+            AmongUsException: Amount of impostors is not between 0 and 3
         """
-        pass
+        if impostors not in range(3):
+            raise AmongUsException("Amount of impostors has to be between 0 and 3!")
+        return await self.connection.find_games(mapId, impostors, language)
 
     async def stop(self, force: bool = False) -> None:
         """

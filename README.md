@@ -67,6 +67,13 @@ client.run(region="EU")
 
 > see [TODO.md](TODO.md)
 
+## Development & Tools
+
+Parse Wireshark data and print the parsed packets
+```sh
+python -m amongus --parse <Wireshark Data (example: 00112233445566)>
+```
+
 [gitlab-repo]: https://gitlab.com/TECHNOFAB/amongusio
 [github-repo]: https://github.com/TECHNOFAB11/amongusio
 [impostor/impostor]: https://github.com/Impostor/Impostor

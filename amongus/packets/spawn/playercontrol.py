@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from .base import SpawnPacket
 from ...enums import SpawnTag
-from ...helpers import readPacked, readMessage
+from ...helpers import readMessage, readPacked
 
 
 class PlayerControlSpawnPacket(SpawnPacket):

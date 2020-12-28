@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import asyncio
+import logging
 from collections import defaultdict
 from typing import Dict, List
+
+logger = logging.getLogger(__name__)
 
 
 class EventBus:
@@ -17,5 +20,6 @@ class EventBus:
                 callbacks.pop(callback)
 
     def dispatch(self, event: str, *args, **kwargs):
+        logger.debug(f"Dispatching event (on_) '{event}'")
         for cb in self.listeners["on_" + event]:
             asyncio.create_task(cb(*args, **kwargs))

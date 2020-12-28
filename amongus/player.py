@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-from typing import List, Dict, Tuple, Union
-from .helpers import readString, readPacked
+from typing import Dict, List, Tuple, Union
+
+from .helpers import readPacked, readString
 from .task import Task
 
 
 class Player:
-    id: int
+    id: int  # noqa: A003
     name: str
     color: int
     hatId: int
@@ -37,7 +38,7 @@ class Player:
         task_amount = _data[1]
         player.tasks = []
         _data = _data[2:]
-        for i in range(task_amount):
+        for _ in range(task_amount):
             t, _data = Task.deserialize(_data)
             player.tasks.append(t)
         return player, _data
@@ -58,12 +59,22 @@ class PlayerList:
     def __contains__(self, item: int):
         return item in self.players.keys()
 
-    def __add__(self, other: Union[Player, list]):
+    def __iadd__(self, other: Union[Player, list]):
+        """
+        Adds a new player or list of players to this PlayerList
+
+        Example:
+            .. code-block:: python
+
+               players = PlayerList()
+               players += [Player(...), Player(...)]
+        """
         if type(other) == list:
             for player in other:
                 self.players.update({player.id: player})
         elif type(other) == Player:
             self.players.update({other.id: other})
+        return self
 
     def __iter__(self):
         return iter(self.players.values())
@@ -77,3 +88,6 @@ class PlayerList:
     def from_net_id(self, net_id: int):
         players = list(filter(lambda p: p.net_id == net_id, self.players.values()))
         return players[0] if len(players) else None
+
+    def complete(self):
+        return all([player.net_id is not None for player in self.players.values()])

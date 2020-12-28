@@ -7,9 +7,7 @@ from typing import Any, Callable
 
 class PacketQueue:
 
-    """
-
-    """
+    """"""
 
     _new_content = asyncio.Event()
     _processed_content = asyncio.Event()
@@ -22,22 +20,19 @@ class PacketQueue:
         self._content.clear()
 
     async def put(self, item: Any):
-        """
-
-        """
+        """"""
         await self._processed_content.wait()
         self._content.append(item)
         self._new_content.set()
 
     async def wait_for(
-        self, filter: Callable, new_only: bool = True, ignore: list = []
+        self, packet_filter: Callable, new_only: bool = True, ignore: list = None
     ):
-        """
-
-        """
+        """"""
+        ignore = ignore or []
         if not new_only:
             for item in self._content:
-                if item not in ignore and filter(item):
+                if item not in ignore and packet_filter(item):
                     return item
 
         while True:
@@ -48,7 +43,7 @@ class PacketQueue:
             except IndexError:
                 pass
             else:
-                if filter(item):
+                if packet_filter(item):
                     return item
             self._new_content.clear()
             self._processed_content.set()

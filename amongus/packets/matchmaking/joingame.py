@@ -1,23 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import struct
 from typing import Tuple
+
 from ..base import Packet
-from ...enums import MatchMakingTag, DisconnectReason
-from ...helpers import unpack, pack
-
-alphabet = "QWXRTYLPESDFGHUJKZOCVBINMA"
-char_map: dict = {
-    chr(x): list(alphabet).index(chr(x)) for x in range(ord("A"), ord("Z") + 1)
-}
-
-
-def gameNameToInt(game_name: str):
-    (a, b, c, d, e, f) = (char_map[char] for char in game_name.upper())
-    return (
-        (a + 26 * b) & 0x3FF
-        | ((c + 26 * (d + 26 * (e + 26 * f))) << 10) & 0x3FFFFC00
-        | 0x80000000
-    )
+from ...enums import DisconnectReason, MatchMakingTag
+from ...helpers import gameNameToInt, pack, unpack
 
 
 class JoinGamePacket(Packet):
@@ -30,11 +18,20 @@ class JoinGamePacket(Packet):
     @classmethod
     def parse(cls, data: bytes) -> Tuple["JoinGamePacket", bytes]:
         reason = unpack({data[:4]: "I"})
-        custom_reason = None
-        if reason == DisconnectReason.Custom:
-            size = data[4]
-            custom_reason = data[5 : 5 + size].decode()
-        return cls(data, reason=reason, custom_reason=custom_reason), b""
+        if DisconnectReason.has_value(reason):
+            custom_reason = None
+            if reason == DisconnectReason.Custom:
+                size = data[4]
+                custom_reason = data[5 : 5 + size].decode()
+            return cls(data, reason=reason, custom_reason=custom_reason), b""
+        else:
+            game_code, player_id, host_id = struct.unpack("III", data[:12])
+            return (
+                cls(
+                    data[:12], game_code=game_code, player_id=player_id, host_id=host_id
+                ),
+                data[12:],
+            )
 
     def serialize(self, getID: callable) -> bytes:
         return (

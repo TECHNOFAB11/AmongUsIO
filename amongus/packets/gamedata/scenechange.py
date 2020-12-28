@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from .base import GameDataPacket
 from ...enums import GameDataTag
-from ...helpers import writeString, createPacked
+from ...helpers import createPacked, writeString
 
 
 class SceneChangePacket(GameDataPacket):

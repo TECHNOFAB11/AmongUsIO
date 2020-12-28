@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from typing import Tuple
+
 from .helpers import readPacked
 
 
 class Task:
-    id: int
+    id: int  # noqa: A003
     complete: bool
 
     @classmethod

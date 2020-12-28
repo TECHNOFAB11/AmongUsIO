@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import struct
 from typing import Tuple
+
 from ...enums import MatchMakingTag
 from ...helpers import readPacked
 from ...packets import Packet

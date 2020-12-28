@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
-from typing import List
+from typing import Coroutine, List
+
 from ..enums import PacketType
 from ..helpers import formatHex
 
@@ -13,8 +15,10 @@ class dotdict(dict):
     Custom dict with which the items can be accessed like an attribute
 
     Example:
-        d = dotdict({"something":5})
-        d.something  # --> 5
+        .. code-block:: python
+
+           d = dotdict({"something":5})
+           d.something  # --> 5
     """
 
     __getattr__ = dict.get
@@ -23,15 +27,14 @@ class dotdict(dict):
 
 
 class Packet:
-    """
-
-    """
+    """"""
 
     parent: "Packet" = None
     data: bytes
     tag: int
     values: dotdict
     reliable_id: int
+    callback: callable
     _contained_packets: list
 
     def __init__(
@@ -42,6 +45,7 @@ class Packet:
         self.parent = self.parent or None
         self.values = dotdict(kwargs)
         self.contained_packets = [] if contained_packets is None else contained_packets
+        self.callback = None
 
     def __iter__(self):
         return iter(self.contained_packets)
@@ -57,11 +61,11 @@ class Packet:
 
     @property
     def reliable(self):
-        return self.tag in [
-            PacketType.Ping,
-            PacketType.Acknowledgement,
-            PacketType.Hello,
-            PacketType.Reliable,
+        return self.__class__.__name__ in [
+            "PingPacket",
+            "ReliablePacket",
+            "AcknowledgePacket",
+            "HelloPacket",
         ]
 
     @property
@@ -83,6 +87,23 @@ class Packet:
         """
         packet.parent = self
         self._contained_packets.append(packet)
+
+    def add_callback(self, cb: Coroutine):
+        """
+        Sets the callback which gets run when the packet was acknowledged
+
+        Args:
+            cb (Coroutine): A coroutine
+        """
+        self.callback = cb
+
+    def ack(self) -> None:
+        """
+        Runs the acknowledge callback
+        """
+        if self.callback is None:
+            return
+        asyncio.ensure_future(self.callback())
 
     @classmethod
     def create(cls, *args, **kwargs) -> "Packet":
@@ -115,6 +136,8 @@ class Packet:
                     # be True. This ensures that packets like Reliable can be parsed
                     # but at the same time packets like JoinGame work like intended
                     continue
+                if first_call and type(p.tag) != PacketType:
+                    continue
                 if p.tag == tag or (type(p.tag) == list and tag in p.tag):
                     result, data = p.parse(data)
                     break
@@ -124,7 +147,8 @@ class Packet:
             else:
                 logger.debug(f"Could not find a packet which can parse '{tag}'")
                 logger.debug(f"Data: {formatHex(data)}")
-                return []
+                data = b""
+            first_call = False
         return packets
 
     def serialize(self, getID: callable) -> bytes:

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import struct
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 
 def formatHex(data: bytes) -> str:
@@ -16,7 +16,9 @@ def pack(data: dict) -> bytes:
     Packs multiple variables at once to bytes
 
     Example:
-        pack({50: "I", 22: "h"})
+        .. code-block:: python
+
+           pack({50: "I", 22: "h"})
 
     Args:
         data (dict): Dict with the values and data types, see example above
@@ -34,7 +36,9 @@ def unpack(data: dict) -> Union[list, int]:
     and not inside of a list
 
     Example:
-        unpack({b"\x01\x01\x01\x01": "I", b"\x01\x01": "h"})
+        .. code-block:: python
+
+           unpack({b"\x01\x01\x01\x01": "I", b"\x01\x01": "h"})
 
     Args:
         data (dict): Dict with the values and data types, see example above
@@ -50,7 +54,9 @@ def createPacked(data: int) -> bytes:
     Packs data (int) into bytes
 
     Example:
-        createPacked(500) # --> b'\xf4\x03'
+        .. code-block:: python
+
+           createPacked(500) # --> b'\xf4\x03'
 
     Args:
         data (int): The number to pack into bytes
@@ -63,7 +69,7 @@ def createPacked(data: int) -> bytes:
 
         result.append(b)
         data >>= 7
-        if not data > 0:
+        if data <= 0:
             break
     return bytes(result)
 
@@ -73,7 +79,9 @@ def readPacked(data: bytes) -> Tuple[int, bytes]:
     Reads/unpacks a packed number from data (bytes)
 
     Example:
-        readPacked(b'\xf4\x03') # --> 500
+        .. code-block:: python
+
+           readPacked(b'\xf4\x03') # --> 500
 
     Args:
         data (bytes): The bytes to unpack
@@ -102,16 +110,50 @@ def readPacked(data: bytes) -> Tuple[int, bytes]:
 
 
 def writeString(data: str):
+    """"""
     data = bytes(data.encode())
     return createPacked(len(data)) + data
 
 
 def readString(data: bytes):
+    """"""
     length, _data = readPacked(data)
     return _data[:length].decode(), _data[length:]
 
 
 def readMessage(data: bytes):
-    length = unpack({data[0:2]: ">h"})
+    """"""
+    length = unpack({data[0:2]: "h"})
     tag = data[2]
     return tag, data[3 : length + 3], data[length + 3 :]
+
+
+alphabet = "QWXRTYLPESDFGHUJKZOCVBINMA"
+char_map: dict = {
+    chr(x): list(alphabet).index(chr(x)) for x in range(ord("A"), ord("Z") + 1)
+}
+
+
+def gameNameToInt(game_name: str) -> int:
+    """"""
+    (a, b, c, d, e, f) = (char_map[char] for char in game_name.upper())
+    return (
+        (a + 26 * b) & 0x3FF
+        | ((c + 26 * (d + 26 * (e + 26 * f))) << 10) & 0x3FFFFC00
+        | 0x80000000
+    )
+
+
+def intToGameName(value: int) -> str:
+    """"""
+    a = value & 0x3FF
+    b = (value >> 10) & 0xFFFFF
+
+    return (
+        alphabet[a % 26]
+        + alphabet[int(a / 26)]
+        + alphabet[b % 26]
+        + alphabet[int(b / 26 % 26)]
+        + alphabet[int(b / (26 * 26) % 26)]
+        + alphabet[int(b / (26 * 26 * 26) % 26)]
+    )

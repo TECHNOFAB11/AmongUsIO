@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 from typing import List, Tuple
+
 from .base import Packet
 from ..enums import PacketType
-from ..helpers import unpack, pack
+from ..helpers import pack, unpack
 
 
 class ReliablePacket(Packet):
@@ -30,9 +31,6 @@ class ReliablePacket(Packet):
 
     def serialize(self, getID: callable) -> bytes:
         _id = getID()
-        rest = b"".join([packet.serialize(getID) for packet in self.contained_packets])
-        return (
-            bytes([self.tag])
-            + pack({_id: ">h", len(rest) - len(self.contained_packets): "h"})
-            + rest
-        )
+        packet_data = [packet.serialize(getID) for packet in self.contained_packets]
+        rest = b"".join([pack({len(d) - 1: "h"}) + d for d in packet_data])
+        return bytes([self.tag]) + pack({_id: ">h"}) + rest

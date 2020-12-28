@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from typing import Tuple
+
 from ...enums import MatchMakingTag
-from ...helpers import unpack, pack, readPacked, createPacked, formatHex
+from ...helpers import createPacked, formatHex, pack, readPacked, unpack
 from ...packets import Packet
 
 logger = logging.getLogger(__name__)

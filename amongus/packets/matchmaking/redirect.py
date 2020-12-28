@@ -3,6 +3,7 @@
 import socket
 import struct
 from typing import Tuple
+
 from ..base import Packet
 from ...enums import MatchMakingTag
 from ...helpers import pack

@@ -1,23 +1,37 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-from .base import Packet
-from .hello import HelloPacket
-from .disconnect import DisconnectPacket
 from .acknowledgement import AcknowledgePacket
+from .base import Packet
+from .disconnect import DisconnectPacket
+from .gamedata import GameDataPacket, SceneChangePacket
+from .hello import HelloPacket
+from .matchmaking import (
+    AlterGamePacket,
+    GetGameListV2Packet,
+    JoinGamePacket,
+    JoinedGamePacket,
+    RedirectPacket,
+    ReselectServerPacket,
+    StartGamePacket,
+)
 from .ping import PingPacket
 from .reliable import ReliablePacket
-from .unreliable import UnreliablePacket
-from .matchmaking import (
-    ReselectServerPacket,
-    JoinGamePacket,
-    RedirectPacket,
-    JoinedGamePacket,
-    GetGameListV2Packet,
-    AlterGamePacket,
+from .rpc import (
+    CheckColorPacket,
+    CheckNamePacket,
+    RPCPacket,
+    SendChatPacket,
+    SetColorPacket,
+    SetHatPacket,
+    SetNamePacket,
+    SetPetPacket,
+    SetSkinPacket,
+    SetStartCounterPacket,
+    SyncSettingsPacket,
+    UpdateGameDataPacket,
 )
-from .gamedata import GameDataPacket, SceneChangePacket
-from .rpc import RPCPacket, SetStartCounterPacket, SendChatPacket
-from .spawn import SpawnPacket, PlayerControlSpawnPacket, GameDataSpawnPacket
+from .spawn import GameDataSpawnPacket, PlayerControlSpawnPacket, SpawnPacket
+from .unreliable import UnreliablePacket
 
 __all__ = [
     "Packet",
@@ -41,4 +55,14 @@ __all__ = [
     "PlayerControlSpawnPacket",
     "SendChatPacket",
     "GameDataSpawnPacket",
+    "SyncSettingsPacket",
+    "UpdateGameDataPacket",
+    "StartGamePacket",
+    "CheckNamePacket",
+    "CheckColorPacket",
+    "SetPetPacket",
+    "SetHatPacket",
+    "SetSkinPacket",
+    "SetNamePacket",
+    "SetColorPacket",
 ]

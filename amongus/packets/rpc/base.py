@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import logging
+
 from ...enums import GameDataTag
-from ...helpers import readPacked, createPacked, formatHex
+from ...helpers import createPacked, formatHex, readPacked
 from ...packets import GameDataPacket
 
 logger = logging.getLogger(__name__)

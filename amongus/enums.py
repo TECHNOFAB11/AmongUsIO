@@ -4,7 +4,9 @@ from enum import IntEnum
 
 
 class AmongUsEnum(IntEnum):
-    pass
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
 
 
 class PacketType(AmongUsEnum):
@@ -118,3 +120,181 @@ class SpawnTag(AmongUsEnum):
     ShipStatus1 = 5
     ShipStatus2 = 6
     ShipStatus3 = 7
+
+
+class GameSettings:
+    class Map(AmongUsEnum):
+        Skeld = 0
+        MiraHQ = 1
+        Polus = 2
+        All = 7
+
+    class Keywords(AmongUsEnum):
+        All = 0
+        Other = 1
+        Spanish = 2
+        Korean = 4
+        Russian = 8
+        Portuguese = 16
+        Arabic = 32
+        Filipone = 64
+        Polish = 128
+        English = 256
+
+    class TaskBarUpdate(AmongUsEnum):
+        Always = 0
+        Meetings = 1
+        Never = 2
+
+    class KillDistances(AmongUsEnum):
+        Short = 0
+        Normal = 1
+        Long = 2
+
+
+class PlayerAttributes:
+    class Color(AmongUsEnum):
+        Red = 0
+        Blue = 1
+        Green = 2
+        Pink = 3
+        Orange = 4
+        Yellow = 5
+        Black = 6
+        White = 7
+        Purple = 8
+        Brown = 9
+        Cyan = 10
+        Lime = 11
+
+    class Hat(AmongUsEnum):
+        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Hats
+        none = 0
+        Astronaut_Helmet = 1
+        Backwards_Cap = 2
+        Brain_Slug = 3
+        Bush_Hat = 4
+        Captain_Hat = 5
+        Double_Top_Hat = 6
+        Flowerpot_Hat = 7
+        Goggles = 8
+        Hard_Hat = 9
+        Military_Hat = 10
+        Paper_Hat = 11
+        Party_Hat = 12
+        Police_Hat = 13
+        Stethoscope = 14
+        Top_Hat = 15
+        Towel_Wizard = 16
+        Ushanka = 17
+        Viking = 18
+        Wall_Guard_Cap = 19
+        Snowman = 20
+        Antlers = 21
+        Christmas_Lights_Hat = 22
+        Santa_Hat = 23
+        Christmas_Tree_Hat = 24
+        Present_Hat = 25
+        Candy_Canes_Hat = 26
+        Elf_Hat = 27
+        Yellow_Party_Hat = 28
+        White_Hat = 29
+        Crown = 30
+        Eyebrows = 31
+        Angel_Halo = 32
+        Elf_Cap = 33
+        Flat_Cap = 34
+        Plunger = 35
+        Snorkel = 36
+        Henry_Figure = 37
+        Safari_Hat = 38
+        Sheriff_Hat = 39
+        Eyeball_Lamp = 40
+        Toilet_Paper_Hat = 41
+        Toppat_Clan_Leader_Hat = 42
+        Black_Fedora = 43
+        Ski_Goggles = 44
+        MIRA_Landing_Headset = 45
+        MIRA_Hazmat_Mask = 46
+        Medical_Mask = 47
+        MIRA_Security_Cap = 48
+        Straw_Hat = 49
+        Banana_Hat = 50
+        Beanie = 51
+        Bear_Ears = 52
+        Cheese_Hat = 53
+        Cherry_Hat = 54
+        Egg_Hat = 55
+        Green_Fedora = 56
+        Flamingo_Hat = 57
+        Flower_Hat = 58
+        Knight_Helmet = 59
+        Plant_Hat = 60
+        Cat_Head_Hat = 61
+        Bat_Wings = 62
+        Devil_Horns = 63
+        Mohawk = 64
+        Pumpkin_Hat = 65
+        Spooky_Paper_Bag_Hat = 66
+        Witch_Hat = 67
+        Wolf_Ears = 68
+        Pirate_Hat = 69
+        Plague_Doctor_Mask = 70
+        Knife_Hat = 71
+        Hockey_Mask = 72
+        Miner_Gear_Hat = 73
+        Winter_Gear_Hat = 74
+        Archaeologist_Hat = 75
+        Antenna = 76
+        Balloon = 77
+        Bird_Nest = 78
+        Black_Bandanna = 79
+        Caution_Sign_Hat = 80
+        Chef_Hat = 81
+        CCC_Cap = 82
+        Dorag = 83
+        Dum_Sticky_Note = 84
+        Fez = 85
+        General_Hat = 86
+        Pompadour = 87
+        Hunter_Hat = 88
+        Military_Helmet = 89
+        Mini_Crewmate = 90
+        Mysterious_Vagabond_Mask = 91
+        Ram_Horns = 92
+        Snow_Crewmate = 93
+        Geoff_Keighley_Mask = 94
+
+    class Skin(AmongUsEnum):
+        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Skins
+        none = 0
+        Astronaut = 1
+        Captain = 2
+        Mechanic = 3
+        Military = 4
+        Police = 5
+        Doctor = 6
+        Black_Suit = 7
+        White_Suit = 8
+        Wall_Guard_Suit = 9
+        MIRA_Hazmat = 10
+        MIRA_Security_Guard = 11
+        MIRA_Landing = 12
+        Miner_Gear = 13
+        Winter_Gear = 14
+        Archaeologist = 15
+
+    class Pet(AmongUsEnum):
+        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Pets
+        none = 0
+        Brainslug = 1
+        Mini_Crewmate = 2
+        Dog = 3
+        Henry = 4
+        Hamster = 5
+        Robot = 6
+        UFO = 7
+        Ellie = 8
+        Squig = 9
+        Bedcrab = 10
+        Glitch = 11
