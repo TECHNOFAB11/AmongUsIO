@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+
+"""
+All :class:`RPCTag` packets
+"""
+
 from .base import RPCPacket
 from .checkcolor import CheckColorPacket
 from .checkname import CheckNamePacket

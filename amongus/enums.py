@@ -124,12 +124,21 @@ class SpawnTag(AmongUsEnum):
 
 class GameSettings:
     class Map(AmongUsEnum):
+        """MapIds of Among Us"""
+
         Skeld = 0
         MiraHQ = 1
         Polus = 2
         All = 7
+        # TODO: when searching for games it looks like this:
+        #   Skeld = 1, MiraHQ = 2, Polus = 4
+        #   thus All = Skeld | MiraHQ | Polus = 7
+        #   but when receiving game data its 0, 1, 2
+        #   -> create two enums??
 
     class Keywords(AmongUsEnum):
+        """Available languages to filter by when searching for games/lobbies"""
+
         All = 0
         Other = 1
         Spanish = 2
@@ -142,11 +151,15 @@ class GameSettings:
         English = 256
 
     class TaskBarUpdate(AmongUsEnum):
+        """Settings for the task bar update, for easier readability"""
+
         Always = 0
         Meetings = 1
         Never = 2
 
     class KillDistances(AmongUsEnum):
+        """Kill distances, for easier readability"""
+
         Short = 0
         Normal = 1
         Long = 2
@@ -154,6 +167,8 @@ class GameSettings:
 
 class PlayerAttributes:
     class Color(AmongUsEnum):
+        """Player colors"""
+
         Red = 0
         Blue = 1
         Green = 2
@@ -168,7 +183,11 @@ class PlayerAttributes:
         Lime = 11
 
     class Hat(AmongUsEnum):
-        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Hats
+        """
+        Among Us hats (cosmetic)
+        from https://among-us.fandom.com/wiki/Cosmetics#List_of_Hats
+        """
+
         none = 0
         Astronaut_Helmet = 1
         Backwards_Cap = 2
@@ -266,7 +285,11 @@ class PlayerAttributes:
         Geoff_Keighley_Mask = 94
 
     class Skin(AmongUsEnum):
-        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Skins
+        """
+        Among Us skins (cosmetic)
+        from https://among-us.fandom.com/wiki/Cosmetics#List_of_Skins
+        """
+
         none = 0
         Astronaut = 1
         Captain = 2
@@ -285,7 +308,11 @@ class PlayerAttributes:
         Archaeologist = 15
 
     class Pet(AmongUsEnum):
-        # from https://among-us.fandom.com/wiki/Cosmetics#List_of_Pets
+        """
+        Among Us pets (cosmetic)
+        from https://among-us.fandom.com/wiki/Cosmetics#List_of_Pets
+        """
+
         none = 0
         Brainslug = 1
         Mini_Crewmate = 2

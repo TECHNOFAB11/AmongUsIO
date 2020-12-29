@@ -27,7 +27,22 @@ class dotdict(dict):
 
 
 class Packet:
-    """"""
+    """The base class for all packets sent and received by this library
+
+    Attributes:
+        parent (Packet): The parent packet if applicable
+        data (bytes): The raw data of the packet, only rarely if ever used
+        tag (int): The tag of the packet, should be overwritten by all subclasses
+        values (dotdict): The values of the packet.
+            :meth:`deserialize` and :meth:`__init__` will add values and
+            :meth:`serialize` will then use these and serialize them in the right format
+        reliable_id (int): If its a reliable packet this will contain the reliable id
+        callback (Coroutine): A coroutine which gets called when the packet was acked
+            by the server
+        contained_packets (list): The sub-packets of this packet, as packets
+            are nearly always nested
+        reliable (bool): If the packet is reliable
+    """
 
     parent: "Packet" = None
     data: bytes
@@ -40,6 +55,14 @@ class Packet:
     def __init__(
         self, data: bytes, tag: int = None, contained_packets: list = None, **kwargs
     ):
+        """
+        Initializes the packet, do not overwrite this!
+        To create a packet use :meth:`Packet.create` instead
+
+        Args:
+            data (bytes): The raw data which resulted in this packet when parsed
+            contained_packets (list): The child packets nested inside of this one
+        """
         self.data = data
         self.tag = self.tag or tag
         self.parent = self.parent or None
@@ -48,9 +71,16 @@ class Packet:
         self.callback = None
 
     def __iter__(self):
+        """Makes it possible to iterate over the contained packets"""
         return iter(self.contained_packets)
 
     def __repr__(self):
+        """
+        Goes through all attributes and displays them if they're not callable or
+        builtins starting with '__'
+
+        By adding attributes to the `ignore` list you can prevent them from being shown
+        """
         ignore = ["tag", "_contained_packets", "data"]
         items = []
         for item in dir(self):

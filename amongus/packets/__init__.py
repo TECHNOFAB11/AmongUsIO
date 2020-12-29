@@ -1,5 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+
+"""
+This contains all kinds of packets used to serialize and deseralize messages from and
+to the server
+"""
+
 from .acknowledgement import AcknowledgePacket
 from .base import Packet
 from .disconnect import DisconnectPacket

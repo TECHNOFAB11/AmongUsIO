@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 
 class Connection:
+
     """
     Class for communication with the Among Us servers via UDP
 
@@ -69,7 +70,7 @@ class Connection:
     socket = None
     closed: bool = False
     connectTimeout: int = 1000
-    recvTimeout: int = 10000
+    recvTimeout: int = 5000
     keepAliveTimeout: int = 1000
     name: str = None
     color: PlayerAttributes.Color
@@ -97,6 +98,14 @@ class Connection:
     _player_amount: int = 0
 
     def __init__(self, eventbus: EventBus):
+        """
+        Init the connection with an eventbus for dispatching events, a message queue,
+        a player list to handle the players and an empty Game object
+
+        Args:
+            eventbus (EventBus): The eventbus of the client, to be able to listen for
+                events from the client/dispatching them directly here in this class
+        """
         self.eventbus = eventbus
         self.queue = PacketQueue()
         self.players = PlayerList()
@@ -151,6 +160,15 @@ class Connection:
             )
             self.closed = False
             self._reader_task = asyncio.create_task(self._reader())
+            try:
+                await asyncio.wait_for(
+                    self.wait_until_ready(), timeout=self.recvTimeout / 1000
+                )
+            except asyncio.TimeoutError:
+                self.result = ConnectionException(
+                    "Timed out waiting for messages", DisconnectReason.Timeout
+                )
+                await self.disconnect(True)
 
     async def disconnect(self, force: bool, reconnect: bool = False) -> None:
         """
@@ -173,8 +191,10 @@ class Connection:
             await self.send(DisconnectPacket.create())
         self.closed = not reconnect
         self.queue.clear()
-        self._reader_task.cancel()
-        self._pinger_task.cancel()
+        if self._reader_task is not None:
+            self._reader_task.cancel()
+        if self._pinger_task is not None:
+            self._pinger_task.cancel()
         self._ready.clear()
         self.socket.close()
 
@@ -275,7 +295,12 @@ class Connection:
     async def find_games(
         self, mapId: GameSettings.Map, impostors: int, language: GameSettings.Keywords
     ) -> GameList:
-        """"""
+        """
+        Finds public games matching the passed properties
+
+        Args:
+            mapId (GameSettings.Map): The map
+        """
         logger.debug(
             f"Finding games... Criteria: mapId={repr(mapId)}, impostors={impostors}, "
             f"language={repr(language)}"

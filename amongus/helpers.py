@@ -109,20 +109,33 @@ def readPacked(data: bytes) -> Tuple[int, bytes]:
     return output, rest
 
 
-def writeString(data: str):
-    """"""
+def writeString(data: str) -> bytes:
+    """
+    Encodes the string and prepends the length and returns both in bytes form
+    """
     data = bytes(data.encode())
     return createPacked(len(data)) + data
 
 
-def readString(data: bytes):
-    """"""
+def readString(data: bytes) -> Tuple[str, bytes]:
+    """
+    Reads the length of the string, then the string itself up to its length
+
+    Returns:
+        A tuple containing the decoded message (str) and the rest of the data
+    """
     length, _data = readPacked(data)
     return _data[:length].decode(), _data[length:]
 
 
 def readMessage(data: bytes):
-    """"""
+    """
+    Reads a whole message (length, tag, data)
+
+    Returns:
+        A tuple containing the tag, the contained bytes and the rest of
+        the bytes after the message
+    """
     length = unpack({data[0:2]: "h"})
     tag = data[2]
     return tag, data[3 : length + 3], data[length + 3 :]
@@ -135,7 +148,9 @@ char_map: dict = {
 
 
 def gameNameToInt(game_name: str) -> int:
-    """"""
+    """
+    Converts a game/lobby code from string to an int understood by the server
+    """
     (a, b, c, d, e, f) = (char_map[char] for char in game_name.upper())
     return (
         (a + 26 * b) & 0x3FF
@@ -145,7 +160,10 @@ def gameNameToInt(game_name: str) -> int:
 
 
 def intToGameName(value: int) -> str:
-    """"""
+    """
+    Does the opposite of :meth:`gameNameToInt` by converting the received game code
+    from int to string
+    """
     a = value & 0x3FF
     b = (value >> 10) & 0xFFFFF
 

@@ -39,8 +39,7 @@ class Client:
         skin: PlayerAttributes.Skin = 0,
         pet: PlayerAttributes.Pet = 0,
     ):
-        """
-        Client used to interact with the Among Us servers
+        """Client used to interact with the Among Us servers
 
         Args:
             name (str): Name which is shown in the game for this Client
@@ -193,7 +192,7 @@ class Client:
 
         Args:
             region (str): Optional; The region where the lobby is hosted,
-                see amongus.regions.regions
+                see :attr:`amongus.regions.regions`
             custom_server (str): Optional; A custom address to connect to, either this
                 or region has to be given. Example: `10.1.1.1:22023` or `10.1.1.1`
 
@@ -201,7 +200,7 @@ class Client:
             ConnectionException: Server disconnected,
                 see :attr:`ConnectionException.reason` for the reason and
                 :attr:`ConnectionException.custom_reason` if the reason is "Custom"
-            AmongUsException: Invalid region
+            AmongUsException: Invalid region or custom_server could not be parsed
         """
         if region is not None and region.upper() not in regions:
             raise AmongUsException(f"The region {region} does not exist!")
@@ -216,9 +215,9 @@ class Client:
             try:
                 _ = ip_address(host)
                 port = int(port)
-            except ValueError:
+            except ValueError as e:
                 # just let the user handle it
-                raise
+                raise AmongUsException("custom_server ip could not be parsed!") from e
         else:
             host = regions[region]
             port = 22023

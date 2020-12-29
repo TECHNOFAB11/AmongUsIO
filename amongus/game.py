@@ -11,7 +11,43 @@ from .player import PlayerList
 
 class Game:
 
-    """"""
+    """
+    Game object which contains the game's settings, players and more
+
+    Attributes:
+        players (PlayerList): The players which are in this game
+        version (int): The version of the game (1-4) which enables the newer features
+        maxPlayers (int): The max amount of players which can join this game
+        keywords (GameSettings.Keywords): The keywords (language) of the game
+        mapId (GameSettings.Map): The selected map for this game
+        playerSpeedMod (int): The player speed multiplier
+        crewLightMod (int): The crewmate vision multiplier
+        impostorLightMod (int): The impostor vision multiplier
+        killCooldown (int): The kill cooldown
+        commonTasks (int): The amount of common tasks
+        longTasks (int): The amount of long tasks
+        shortTasks (int): The amount of short tasks
+        emergencyMeetings (int): The amount of possible emergency meetings
+        impostors (int): The amount of impostors
+        killDistance (GameSettings.KillDistances): The kill distance for the impostor
+        discussionTime (int): The discussion/meeting time
+        votingTime (int): The voting time
+        default (bool): If the settings are the default ones
+        emergencyCooldown (int): The cooldown for emergency meetings
+        confirmImpostor (bool): If the impostor should be revealed upon vote kill
+        visualTasks (bool): If tasks that visually can prove the person as crewmate
+            should be enabled (more info: https://among-us.fandom.com/wiki/Visual_Tasks)
+        anonymousVotes (bool): If the votes should be anonymous/grey
+        taskBarUpdates (GameSettings.TaskBarUpdate): Whether the task bar updates
+            never, always or just upon meeting calls
+        host (str): the hostname of the lobby
+        port (int): the port of the lobby
+        playerCount (int): The amount of players in this game
+        name (str): The game name (visible when searching games)
+        code (int): The game's code (6 chars)
+        public (bool): If the game is public and thus can be found by everyone
+
+    """
 
     players: PlayerList
     version: int
@@ -134,6 +170,12 @@ class Game:
         return data
 
     def __repr__(self):
+        """
+        Goes through all attributes and displays them if they're not callable or
+        builtins starting with '__'
+
+        By adding attributes to the `ignore` list you can prevent them from being shown
+        """
         ignore = []
         items = []
         for item in dir(self):

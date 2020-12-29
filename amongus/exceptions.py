@@ -3,9 +3,7 @@
 
 
 class AmongUsException(Exception):
-    """
-    Base Exception from which all exceptions of this package derive
-    """
+    """Base Exception from which all exceptions of this package derive"""
 
     pass
 
@@ -25,6 +23,13 @@ class ConnectionException(AmongUsException):
     custom_reason: str
 
     def __init__(self, message: str, reason: int, **kwargs):
+        """
+        Initializes the exception and sets the passed kwargs as attributes
+
+        Args:
+            message (str): The message for the user
+            reason (int): The :class:`DisconnectReason` why the connection was closed
+        """
         self.reason = reason
         self.message = message
         for key, val in kwargs.items():
