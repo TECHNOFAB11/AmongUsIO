@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""All :class:`MatchMakingTag` packets"""
+"""All :class:`MatchMakingTag` packets."""
 
 from .altergame import AlterGamePacket
 from .getgamelistv2 import GetGameListV2Packet

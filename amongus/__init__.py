@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""Asynchronous Python Among Us Client"""
+"""Asynchronous Python Among Us Client."""
 
 __version__ = "0.0.4a"
 __author__ = "Technofab"

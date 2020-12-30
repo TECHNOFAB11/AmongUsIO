@@ -124,7 +124,6 @@ class SpawnTag(AmongUsEnum):
 
 class GameSettings:
     class Map(AmongUsEnum):
-
         """MapIds of Among Us"""
 
         Skeld = 0
@@ -138,7 +137,6 @@ class GameSettings:
         #   -> create two enums??
 
     class Keywords(AmongUsEnum):
-
         """Available languages to filter by when searching for games/lobbies"""
 
         All = 0
@@ -153,7 +151,6 @@ class GameSettings:
         English = 256
 
     class TaskBarUpdate(AmongUsEnum):
-
         """Settings for the task bar update, for easier readability"""
 
         Always = 0
@@ -161,7 +158,6 @@ class GameSettings:
         Never = 2
 
     class KillDistances(AmongUsEnum):
-
         """Kill distances, for easier readability"""
 
         Short = 0
@@ -171,7 +167,6 @@ class GameSettings:
 
 class PlayerAttributes:
     class Color(AmongUsEnum):
-
         """Player colors"""
 
         Red = 0
@@ -188,7 +183,6 @@ class PlayerAttributes:
         Lime = 11
 
     class Hat(AmongUsEnum):
-
         """
         Among Us hats (cosmetic)
         from https://among-us.fandom.com/wiki/Cosmetics#List_of_Hats
@@ -291,7 +285,6 @@ class PlayerAttributes:
         Geoff_Keighley_Mask = 94
 
     class Skin(AmongUsEnum):
-
         """
         Among Us skins (cosmetic)
         from https://among-us.fandom.com/wiki/Cosmetics#List_of_Skins
@@ -315,7 +308,6 @@ class PlayerAttributes:
         Archaeologist = 15
 
     class Pet(AmongUsEnum):
-
         """
         Among Us pets (cosmetic)
         from https://among-us.fandom.com/wiki/Cosmetics#List_of_Pets

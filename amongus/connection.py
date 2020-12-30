@@ -50,7 +50,6 @@ logger = logging.getLogger(__name__)
 
 
 class Connection:
-
     """
     Class for communication with the Among Us servers via UDP
 
@@ -116,23 +115,19 @@ class Connection:
 
     @property
     def reliable_id(self) -> int:
-        """
-        This increases the current message id and returns the old value
-        """
+        """This increases the current message id and returns the old value"""
         _id = self._id
         self._id += 1
         return _id
 
     @property
     def ready(self) -> bool:
-        """
-        If we received a message from the server yet
-        """
+        """If we received a message from the server yet"""
         return self._ready.is_set()
 
     @property
     def player(self) -> Player:
-        """"""
+        """The current player (/ourselves)"""
         return self.players.from_net_id(self.net_ids.control)
 
     async def connect(self, name: str, host: str, port: int = 22023) -> None:
@@ -655,9 +650,7 @@ class Connection:
         self._pinger_task = asyncio.create_task(self._pinger())
 
     async def _pinger(self) -> None:
-        """
-        Periodically sends Ping packets
-        """
+        """Periodically sends Ping packets"""
         while not self.closed:
             await asyncio.sleep(self.keepAliveTimeout / 1000)
             await self.send(PingPacket.create(self.reliable_id))

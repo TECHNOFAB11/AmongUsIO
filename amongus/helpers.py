@@ -5,7 +5,6 @@ from typing import Tuple, Union
 
 
 class dotdict(dict):
-
     """
     Custom dict with which the items can be accessed like an attribute
 
@@ -45,7 +44,7 @@ def pack(data: dict) -> bytes:
 
 
 def unpack(data: dict) -> Union[list, int]:
-    """
+    r"""
     Unpacks multiple variables at once to bytes
     If there is only one entry to unpack the result will be returned directly
     and not inside of a list
@@ -65,7 +64,7 @@ def unpack(data: dict) -> Union[list, int]:
 
 
 def createPacked(data: int) -> bytes:
-    """
+    r"""
     Packs data (int) into bytes
 
     Example:
@@ -90,7 +89,7 @@ def createPacked(data: int) -> bytes:
 
 
 def readPacked(data: bytes) -> Tuple[int, bytes]:
-    """
+    r"""
     Reads/unpacks a packed number from data (bytes)
 
     Example:

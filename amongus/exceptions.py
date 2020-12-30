@@ -3,14 +3,12 @@
 
 
 class AmongUsException(Exception):
-
     """Base Exception from which all exceptions of this package derive"""
 
     pass
 
 
 class ConnectionException(AmongUsException):
-
     """
     Exception which gets raised when something went wrong with the connection
 

@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Packet:
-
     """The base class for all packets sent and received by this library
 
     Attributes:
@@ -116,9 +115,7 @@ class Packet:
         self.callback = cb
 
     def ack(self) -> None:
-        """
-        Runs the acknowledge callback
-        """
+        """Runs the acknowledge callback"""
         if self.callback is None:
             return
         asyncio.ensure_future(self.callback())

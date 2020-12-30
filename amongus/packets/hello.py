@@ -6,6 +6,7 @@ from ..helpers import pack
 
 
 def convertGameVersion(version: tuple) -> int:
+    """Converts the game version tuple to int"""
     return (
         (version[0] * 25000)
         + (version[1] * 1800)

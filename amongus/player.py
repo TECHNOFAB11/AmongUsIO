@@ -35,6 +35,7 @@ class Player:
     velocity: Tuple[int, int]
 
     def __repr__(self):
+        """Shows the player in a more readable form"""
         return (
             f"<{self.__class__.__name__} id={self.id}, name={self.name}, "
             f"net_ids={self.net_ids}, color={self.color}, tasks="
@@ -65,7 +66,8 @@ class Player:
 
 
 class PlayerList:
-    """A class to manage players
+    """
+    A class to manage players
 
     Attributes:
         players (Dict[int, Player]): The players in this PlayerList, this attribute
