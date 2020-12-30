@@ -3,7 +3,7 @@
 import asyncio
 import re
 from ipaddress import ip_address
-from typing import Any, Callable, Union
+from typing import Any, Callable, Tuple, Union
 
 from .connection import Connection
 from .enums import GameSettings, PlayerAttributes
@@ -297,3 +297,14 @@ class Client:
             message (str): The message to send
         """
         await self.connection.send_chat(message)
+
+    async def move(self, position: Tuple[int, int], velocity: Tuple[int, int]) -> None:
+        """
+        Moves the player to the given position
+
+        Args:
+            position (Tuple[int, int]): A tuple of x, y coordinates to move to
+            velocity (Tuple[int, int]): A tuple of x, y coordinates with the
+                velocity/relative position
+        """
+        await self.connection.move(position, velocity)

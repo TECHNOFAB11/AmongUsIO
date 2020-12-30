@@ -4,6 +4,22 @@ import struct
 from typing import Tuple, Union
 
 
+class dotdict(dict):
+    """
+    Custom dict with which the items can be accessed like an attribute
+
+    Example:
+        .. code-block:: python
+
+           d = dotdict({"something":5})
+           d.something  # --> 5
+    """
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def formatHex(data: bytes) -> str:
     """
     Formats bytes into hex and more readable form
@@ -139,6 +155,39 @@ def readMessage(data: bytes):
     length = unpack({data[0:2]: "h"})
     tag = data[2]
     return tag, data[3 : length + 3], data[length + 3 :]
+
+
+def readVector2(data: bytes) -> Tuple[Tuple[float, float], bytes]:
+    """
+    Reads coordinates (a 2D Vector) from bytes
+
+    Args:
+        data (bytes): The data to read the vector from. Only the first 4 bytes are
+            used, the rest is just returned back in the tuple
+
+    Returns:
+        A tuple containing the two coordinates (x, y) and the rest of the data (4:)
+    """
+    x, y = struct.unpack("<HH", data[:4])
+    x = -40 + (80 * min(max(x / 0xFFFF, 0), 1))
+    y = -40 + (80 * min(max(y / 0xFFFF, 0), 1))
+    return (x, y), data[4:]
+
+
+def createVector2(x: float, y: float) -> bytes:
+    """
+    Creates a 2d vector and serializes it into bytes
+
+    Args:
+        x (float): The x coordinate
+        y (float): The y coordinate
+
+    Returns:
+        The coordinates in bytes (len=4)
+    """
+    x = int(round(((x + 40) / 80) * 0xFFFF, 0))
+    y = int(round(((y + 40) / 80) * 0xFFFF, 0))
+    return struct.pack("<H", x) + struct.pack("<H", y)
 
 
 alphabet = "QWXRTYLPESDFGHUJKZOCVBINMA"

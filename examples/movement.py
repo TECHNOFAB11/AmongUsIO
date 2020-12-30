@@ -17,16 +17,11 @@ async def on_game_join(lobby_code: str):
 
 
 @client.event
-async def on_chat(message: str, sender: amongus.Player):
-    print(f"[Chat] {sender.name}: {message}")
-
-    if message == "stop":
-        await client.stop()
-    elif message == "source":
-        await client.send_chat("https://gitlab.com/TECHNOFAB/AmongUsIO")
-    else:
-        # echo back
-        await client.send_chat(message)
+async def on_player_move(player: amongus.Player):
+    print("Player moved, following:", player.name)
+    # follows the player that is currently moving (this teleports, probably banned in
+    # the future thru anti cheat?)
+    await client.move(player.position, player.velocity)
 
 
 client.run(region="EU")

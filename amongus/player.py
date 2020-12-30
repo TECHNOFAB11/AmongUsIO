@@ -3,7 +3,7 @@
 from typing import Dict, List, Tuple, Union
 
 from .enums import PlayerAttributes
-from .helpers import readPacked, readString
+from .helpers import dotdict, readPacked, readString
 from .task import Task
 
 
@@ -31,19 +31,21 @@ class Player:
     skinId: PlayerAttributes.Skin
     statusBitField: int
     tasks: List[Task]
-    net_id: int
+    net_ids: dotdict
+    position: Tuple[int, int]
+    velocity: Tuple[int, int]
 
     def __repr__(self):
         return (
             f"<{self.__class__.__name__} id={self.id}, name={self.name}, "
-            f"net_id={self.net_id}, color={self.color}, tasks="
+            f"net_ids={self.net_ids}, color={self.color}, tasks="
             f"[{', '.join(self.tasks)}]>"
         )
 
     @classmethod
     def deserialize(cls, data: bytes) -> Tuple["Player", bytes]:
         player = cls()
-        player.net_id = None
+        player.net_ids = {"control": None, "physics": None, "network": None}
         player.id = data[0]
         player.name, _data = readString(data[1:])
         player.color = _data[0]
@@ -117,7 +119,9 @@ class PlayerList:
 
     def from_net_id(self, net_id: int) -> Player:
         """Returns a player by its net_id or None if no player was found"""
-        players = list(filter(lambda p: p.net_id == net_id, self.players.values()))
+        players = list(
+            filter(lambda p: net_id in p.net_ids.values(), self.players.values())
+        )
         return players[0] if len(players) else None
 
     def complete(self) -> bool:

@@ -4,7 +4,7 @@ from typing import Tuple
 
 from .base import Packet
 from ..enums import DisconnectReason, PacketType
-from ..helpers import unpack
+from ..helpers import readMessage
 
 
 class DisconnectPacket(Packet):
@@ -18,14 +18,12 @@ class DisconnectPacket(Packet):
     def parse(cls, data: bytes) -> Tuple["DisconnectPacket", bytes]:
         if len(data) == 0:
             return cls(data, reason=None), b""
-        _, size = unpack({data[0:2]: "h", data[2:4]: ">h"})
-        # no idea what the first thing is. Also, second one probably isnt size as its
-        # sometimes 0, but also no idea why //TODO
-        reason = DisconnectReason(data[4])
+        _, _data, _ = readMessage(data)
+        reason = DisconnectReason(_data[1])
         custom_reason = None
         if reason == DisconnectReason.Custom:
-            size = data[4]
-            custom_reason = data[5 : 5 + size].decode()
+            size = _data[2]
+            custom_reason = _data[3 : 3 + size].decode()
 
         return cls(data, reason=reason, custom_reason=custom_reason), b""
 

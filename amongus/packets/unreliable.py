@@ -12,9 +12,7 @@ class UnreliablePacket(Packet):
 
     @classmethod
     def create(cls, packets: List[Packet]) -> "UnreliablePacket":
-        p = cls(b"")
-        p.contained_packets = packets
-        return p
+        return cls(b"", contained_packets=packets)
 
     @classmethod
     def parse(cls, data: bytes) -> Tuple["UnreliablePacket", bytes]:
@@ -28,5 +26,6 @@ class UnreliablePacket(Packet):
         return p, b""
 
     def serialize(self, getID: callable) -> bytes:
-        rest = b"".join([packet.serialize(getID) for packet in self.contained_packets])
-        return bytes([self.tag]) + pack({len(rest): "h"}) + rest
+        packet_data = [packet.serialize(getID) for packet in self.contained_packets]
+        rest = b"".join([pack({len(d) - 1: "h"}) + d for d in packet_data])
+        return bytes([self.tag]) + rest

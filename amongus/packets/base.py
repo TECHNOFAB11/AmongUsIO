@@ -5,25 +5,9 @@ import logging
 from typing import Coroutine, List
 
 from ..enums import PacketType
-from ..helpers import formatHex
+from ..helpers import dotdict, formatHex
 
 logger = logging.getLogger(__name__)
-
-
-class dotdict(dict):
-    """
-    Custom dict with which the items can be accessed like an attribute
-
-    Example:
-        .. code-block:: python
-
-           d = dotdict({"something":5})
-           d.something  # --> 5
-    """
-
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
 
 class Packet:
@@ -64,7 +48,7 @@ class Packet:
             contained_packets (list): The child packets nested inside of this one
         """
         self.data = data
-        self.tag = self.tag or tag
+        self.tag = self.tag if self.tag is not None else tag
         self.parent = self.parent or None
         self.values = dotdict(kwargs)
         self.contained_packets = [] if contained_packets is None else contained_packets
@@ -86,7 +70,10 @@ class Packet:
         for item in dir(self):
             val = getattr(self, item)
             if not callable(val) and not item.startswith("__") and item not in ignore:
-                items.append(f"{item}={val}")
+                if item == "parent":
+                    items.append(f"{item}={val.__class__.__name__}")
+                else:
+                    items.append(f"{item}={val}")
         return f"<{self.__class__.__name__} {', '.join(items)}>"
 
     @property

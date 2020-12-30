@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
-from typing import Dict
+from typing import Dict, Tuple
 
 import asyncio_dgram
 
 from .enums import (
     DisconnectReason,
+    GameDataTag,
     GameSettings,
     MatchMakingTag,
     PacketType,
@@ -18,7 +19,7 @@ from .enums import (
 from .eventbus import EventBus
 from .exceptions import ConnectionException
 from .game import Game, GameList
-from .helpers import formatHex
+from .helpers import dotdict, formatHex
 from .packets import (
     AcknowledgePacket,
     CheckColorPacket,
@@ -27,6 +28,7 @@ from .packets import (
     GetGameListV2Packet,
     HelloPacket,
     JoinGamePacket,
+    MovementPacket,
     Packet,
     PingPacket,
     ReliablePacket,
@@ -84,12 +86,13 @@ class Connection:
     game_id: int = None
     host_id: int = None
     client_id: int = None
-    net_id: int = None
+    net_ids: dotdict
     result = None
     game: Game
     eventbus: EventBus
     queue: PacketQueue
     players: PlayerList
+    _sequence_ids: Dict[Player, int]
     _id: int = 1
     _ready: asyncio.Event = asyncio.Event()
     _reader_task: asyncio.Task = None
@@ -127,6 +130,11 @@ class Connection:
         """
         return self._ready.is_set()
 
+    @property
+    def player(self) -> Player:
+        """"""
+        return self.players.from_net_id(self.net_ids.control)
+
     async def connect(self, name: str, host: str, port: int = 22023) -> None:
         """
         Connects to the given server via UDP and starts listening for data on success
@@ -139,6 +147,8 @@ class Connection:
         Raises:
             Exception: Something went wrong, never happened while testing
         """
+        self._sequence_ids = {}
+        self.net_ids = dotdict({"control": None, "physics": None, "network": None})
         self.host, self.port, self.name = host, port, name
         try:
             self.socket = await asyncio.wait_for(
@@ -283,7 +293,8 @@ class Connection:
                     GameDataPacket.create(
                         [
                             RPCPacket.create(
-                                [SendChatPacket.create(message)], net_id=self.net_id
+                                [SendChatPacket.create(message)],
+                                net_id=self.net_ids.control,
                             )
                         ],
                         game_id=self.game_id,
@@ -300,6 +311,8 @@ class Connection:
 
         Args:
             mapId (GameSettings.Map): The map
+            impostors (int): The amount of impostors
+            language (GameSettings.Keywords): The language of the chat
         """
         logger.debug(
             f"Finding games... Criteria: mapId={repr(mapId)}, impostors={impostors}, "
@@ -332,6 +345,38 @@ class Connection:
             polus_count=result.values.polus_count,
         )
 
+    async def move(self, position: Tuple[int, int], velocity: Tuple[int, int]) -> None:
+        """
+        Moves the player to the given position
+
+        Args:
+            position (Tuple[int, int]): A tuple of x, y coordinates to move to
+            velocity (Tuple[int, int]): A tuple of x, y coordinates with the
+                velocity/relative position
+        """
+        if self.player not in self._sequence_ids:
+            self._sequence_ids[self.player] = 0
+        else:
+            self._sequence_ids[self.player] += 1
+
+        await self.send(
+            UnreliablePacket.create(
+                [
+                    GameDataPacket.create(
+                        [
+                            MovementPacket.create(
+                                position=position,
+                                velocity=velocity,
+                                net_id=self.net_ids.network,
+                                sequence_id=self._sequence_ids[self.player],
+                            )
+                        ],
+                        game_id=self.game_id,
+                    )
+                ]
+            )
+        )
+
     async def acknowledge(self, reliable_id: int) -> None:
         """
         Sends an Acknowledge message for the given id
@@ -358,7 +403,6 @@ class Connection:
                 f"packet, handling the contained packets:"
             )
             for p in packet:
-                logger.debug(f" - {p}")
                 await self.on_packet(p)
             return
         elif type(packet) == RPCPacket:
@@ -435,6 +479,26 @@ class Connection:
             elif packet.tag == MatchMakingTag.JoinGame:
                 # handled with queue.wait_for
                 return
+        elif type(packet.tag) == GameDataTag:
+            if packet.tag == GameDataTag.DataFlag:
+                player = self.players.from_net_id(packet.values.net_id)
+                if player is None:
+                    logger.warning(
+                        f"Received movement data for unknown player! {packet}"
+                    )
+                    return
+                # movement data
+                if packet.values.sequence_id > self._sequence_ids.get(player, 0):
+                    self._sequence_ids[player] = packet.values.sequence_id
+                    player.position = packet.values.position
+                    player.velocity = packet.values.velocity
+                    self.eventbus.dispatch("player_move", player)
+                else:
+                    logger.debug(
+                        f"Got old movement packet with sequence "
+                        f"id {packet.values.sequence_id}"
+                    )
+                return
         elif type(packet.tag) == RPCTag:
             if packet.tag == RPCTag.SetStartCounter:
                 logger.debug(
@@ -473,14 +537,16 @@ class Connection:
             elif packet.tag == RPCTag.SetName:
                 if packet.values.name is not None:
                     logger.debug(f"Got our name: {packet.values.name}")
-                    self.name = packet.values.name
-                    self.eventbus.dispatch("name_update", self.name)
+                    if self.name != packet.values.name:
+                        self.name = packet.values.name
+                        self.eventbus.dispatch("name_update", self.name)
                 return
             elif packet.tag == RPCTag.SetColor:
                 if PlayerAttributes.Color.has_value(packet.values.color):
                     logger.debug(f"Got color: {packet.values.color}")
-                    self.color = PlayerAttributes.Color(packet.values.color)
-                    self.eventbus.dispatch("color_update", self.color)
+                    if self.color != packet.values.color:
+                        self.color = PlayerAttributes.Color(packet.values.color)
+                        self.eventbus.dispatch("color_update", self.color)
                 return
         elif type(packet.tag) == SpawnTag:
             if packet.tag == SpawnTag.GameData:
@@ -493,16 +559,16 @@ class Connection:
             elif packet.tag == SpawnTag.PlayerControl:
                 logger.debug(f"Received PlayerControl data: {packet}")
                 if packet.parent.values.owner == self.client_id:
-                    self.net_id = packet.values.net_id
+                    self.net_ids = packet.values.net_ids
                 else:
                     player = self.players[packet.values.player_id]
                     if player is None:
                         player = Player()
                         player.id = packet.values.player_id
                         self.players += player
-                    player.net_id = packet.values.net_id
+                    player.net_ids = packet.values.net_ids
 
-                if self.players.complete() and self.net_id is not None:
+                if all(n is not None for n in self.net_ids.values()):
                     await self.send(
                         ReliablePacket.create(
                             [
@@ -512,7 +578,7 @@ class Connection:
                                             [
                                                 CheckNamePacket.create(name=self.name),
                                             ],
-                                            net_id=self.net_id,
+                                            net_id=self.net_ids.control,
                                         ),
                                     ],
                                     game_id=self.game_id,
@@ -532,7 +598,7 @@ class Connection:
                                                     color=self.color
                                                 ),
                                             ],
-                                            net_id=self.net_id,
+                                            net_id=self.net_ids.control,
                                         ),
                                     ],
                                     game_id=self.game_id,
@@ -550,19 +616,19 @@ class Connection:
                                             [
                                                 SetPetPacket.create(pet=self.pet),
                                             ],
-                                            net_id=self.net_id,
+                                            net_id=self.net_ids.control,
                                         ),
                                         RPCPacket.create(
                                             [
                                                 SetHatPacket.create(hat=self.hat),
                                             ],
-                                            net_id=self.net_id,
+                                            net_id=self.net_ids.control,
                                         ),
                                         RPCPacket.create(
                                             [
                                                 SetSkinPacket.create(skin=self.skin),
                                             ],
-                                            net_id=self.net_id,
+                                            net_id=self.net_ids.control,
                                         ),
                                     ],
                                     game_id=self.game_id,
