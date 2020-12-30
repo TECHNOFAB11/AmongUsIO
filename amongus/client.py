@@ -14,8 +14,7 @@ from .regions import regions
 
 
 class Client:
-    """
-    The main client used to interact with the Among Us servers
+    """The main client used to interact with the Among Us servers
 
     Attributes:
         name (str): The current name of the user
@@ -39,7 +38,8 @@ class Client:
         skin: PlayerAttributes.Skin = 0,
         pet: PlayerAttributes.Pet = 0,
     ):
-        """Client used to interact with the Among Us servers
+        """
+        Client used to interact with the Among Us servers
 
         Args:
             name (str): Name which is shown in the game for this Client

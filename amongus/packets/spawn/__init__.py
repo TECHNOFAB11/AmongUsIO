@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""
-All :class:`SpawnTag` packets
-"""
+"""All :class:`SpawnTag` packets"""
 
 from .base import SpawnPacket
 from .gamedata import GameDataSpawnPacket

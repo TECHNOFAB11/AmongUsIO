@@ -10,7 +10,6 @@ from .player import PlayerList
 
 
 class Game:
-
     """
     Game object which contains the game's settings, players and more
 

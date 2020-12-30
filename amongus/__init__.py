@@ -1,11 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""
-Asynchronous Python Among Us Client
-"""
+"""Asynchronous Python Among Us Client"""
 
-__version__ = "0.0.3a"
+__version__ = "0.0.4a"
 __author__ = "Technofab"
 __email__ = "amongusio.git@technofab.de"
 __copyright__ = "Copyright 2020, Technofab"

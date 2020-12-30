@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Packet:
+
     """The base class for all packets sent and received by this library
 
     Attributes:
@@ -55,7 +56,7 @@ class Packet:
         self.callback = None
 
     def __iter__(self):
-        """Makes it possible to iterate over the contained packets"""
+        """Makes it possible to iterate over the contained packets."""
         return iter(self.contained_packets)
 
     def __repr__(self):

@@ -5,6 +5,7 @@ from typing import Tuple, Union
 
 
 class dotdict(dict):
+
     """
     Custom dict with which the items can be accessed like an attribute
 
@@ -21,9 +22,7 @@ class dotdict(dict):
 
 
 def formatHex(data: bytes) -> str:
-    """
-    Formats bytes into hex and more readable form
-    """
+    """Formats bytes into hex and more readable form"""
     return " ".join(data.hex()[i : i + 2] for i in range(0, len(data.hex()), 2))
 
 
@@ -126,9 +125,7 @@ def readPacked(data: bytes) -> Tuple[int, bytes]:
 
 
 def writeString(data: str) -> bytes:
-    """
-    Encodes the string and prepends the length and returns both in bytes form
-    """
+    """Encodes the string and prepends the length and returns both in bytes form"""
     data = bytes(data.encode())
     return createPacked(len(data)) + data
 
@@ -197,9 +194,7 @@ char_map: dict = {
 
 
 def gameNameToInt(game_name: str) -> int:
-    """
-    Converts a game/lobby code from string to an int understood by the server
-    """
+    """Converts a game/lobby code from string to an int understood by the server"""
     (a, b, c, d, e, f) = (char_map[char] for char in game_name.upper())
     return (
         (a + 26 * b) & 0x3FF

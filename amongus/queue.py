@@ -6,7 +6,6 @@ from typing import Any, Callable
 
 
 class PacketQueue:
-
     """
     A queue for incoming packets and methods to be able to handle them in multiple
     places at once
@@ -16,6 +15,13 @@ class PacketQueue:
     _processed_content = asyncio.Event()
 
     def __init__(self, maxlen: int = None):
+        """
+        Initializes the queue
+
+        Args:
+            maxlen (int): If given the queue has a limited length and everything
+                beyond that length will be deleted (LOFI)
+        """
         self._content = collections.deque(maxlen=maxlen)
         self._processed_content.set()
 
@@ -23,7 +29,7 @@ class PacketQueue:
         self._content.clear()
 
     async def put(self, item: Any):
-        """Adds a new item to the queue"""
+        """Adds a new item to the queue."""
         await self._processed_content.wait()
         self._content.append(item)
         self._new_content.set()

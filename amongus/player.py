@@ -8,7 +8,6 @@ from .task import Task
 
 
 class Player:
-
     """Represents an Among Us player
 
     Attributes:
@@ -66,7 +65,6 @@ class Player:
 
 
 class PlayerList:
-
     """A class to manage players
 
     Attributes:
@@ -77,20 +75,19 @@ class PlayerList:
     players: Dict[int, Player]
 
     def __init__(self):
-        """Creates a new PlayerList with no players"""
+        """Creates a new PlayerList with no players."""
         self.players = {}
 
     def __repr__(self):
-        """Show the attributes in a readable form"""
+        """Show the attributes in a readable form."""
         return f"<{self.__class__.__name__} players={self.players}>"
 
     def __contains__(self, item: int) -> bool:
-        """If this PlayerList contains a player_id"""
+        """If this PlayerList contains a player_id."""
         return item in self.players.keys()
 
     def __iadd__(self, other: Union[Player, list]):
-        """
-        Adds a new player or list of players to this PlayerList
+        """Adds a new player or list of players to this PlayerList
 
         Example:
             .. code-block:: python
@@ -106,24 +103,29 @@ class PlayerList:
         return self
 
     def __iter__(self):
-        """Makes it possible to iterate over this PlayerList"""
+        """Makes it possible to iterate over this PlayerList."""
         return iter(self.players.values())
 
     def __getitem__(self, player_id: int) -> Player:
-        """Returns a player by it's player_id"""
+        """Returns a player by it's player_id."""
         return self.players.get(player_id)
 
     def __len__(self) -> int:
-        """Returns the amount of players in this PlayerList"""
+        """Returns the amount of players in this PlayerList."""
         return len(self.players)
 
     def from_net_id(self, net_id: int) -> Player:
-        """Returns a player by its net_id or None if no player was found"""
+        """Returns a player by its net_id or None if no player was found."""
         players = list(
             filter(lambda p: net_id in p.net_ids.values(), self.players.values())
         )
         return players[0] if len(players) else None
 
     def complete(self) -> bool:
-        """Returns True if all player's net_id's are known and thus ready"""
-        return all([player.net_id is not None for player in self.players.values()])
+        """Returns True if all player's net_id's are known and thus ready."""
+        return all(
+            [
+                all(i is not None for i in player.net_ids)
+                for player in self.players.values()
+            ]
+        )
