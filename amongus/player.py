@@ -35,12 +35,19 @@ class Player:
     velocity: Tuple[int, int]
 
     def __repr__(self):
-        """Shows the player in a more readable form"""
-        return (
-            f"<{self.__class__.__name__} id={self.id}, name={self.name}, "
-            f"net_ids={self.net_ids}, color={self.color}, tasks="
-            f"[{', '.join(self.tasks)}]>"
-        )
+        """
+        Goes through all attributes and displays them if they're not callable or
+        builtins starting with '__'
+
+        By adding attributes to the `ignore` list you can prevent them from being shown
+        """
+        ignore = []
+        items = []
+        for item in dir(self):
+            val = getattr(self, item)
+            if not callable(val) and not item.startswith("__") and item not in ignore:
+                items.append(f"{item}={val}")
+        return f"<{self.__class__.__name__} {', '.join(items)}>"
 
     @classmethod
     def deserialize(cls, data: bytes) -> Tuple["Player", bytes]:
@@ -125,9 +132,12 @@ class PlayerList:
 
     def complete(self) -> bool:
         """Returns True if all player's net_id's are known and thus ready."""
-        return all(
-            [
-                all(i is not None for i in player.net_ids)
-                for player in self.players.values()
-            ]
+        return (
+            all(
+                [
+                    all(i is not None for i in player.net_ids)
+                    for player in self.players.values()
+                ]
+            )
+            and len(self.players) > 0
         )

@@ -24,6 +24,8 @@ async def on_chat(message: str, sender: amongus.Player):
         await client.stop()
     elif message == "source":
         await client.send_chat("https://gitlab.com/TECHNOFAB/AmongUsIO")
+    elif message == "ping":
+        await client.send_chat(f"Pong! Latency: {client.latency}ms")
     else:
         # echo back
         await client.send_chat(message)

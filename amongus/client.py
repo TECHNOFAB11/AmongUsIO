@@ -25,6 +25,8 @@ class Client:
         hat (PlayerAttributes.Hat): Hat of the character
         skin (PlayerAttributes.Skin): Skin of the character
         pet (PlayerAttributes.Pet): Pet of the character
+        spectator (bool): Whether the Client should behave like a normal player
+            or just "spectate" and remain invisible
     """
 
     connection: Connection
@@ -37,6 +39,7 @@ class Client:
         hat: PlayerAttributes.Hat = 0,
         skin: PlayerAttributes.Skin = 0,
         pet: PlayerAttributes.Pet = 0,
+        spectator: bool = False,
     ):
         """
         Client used to interact with the Among Us servers
@@ -50,6 +53,7 @@ class Client:
             hat (PlayerAttributes.Hat): Hat of the character
             skin (PlayerAttributes.Skin): Skin of the character
             pet (PlayerAttributes.Pet): Pet of the character
+            spectator (bool): If the client should only spectate
 
         Raises:
             AmongUsException: Name is longer than 10 or shorter than 1 characters
@@ -65,6 +69,7 @@ class Client:
         self.hat = hat
         self.skin = skin
         self.pet = pet
+        self.spectator = spectator
 
     @property
     def stopped(self) -> bool:
@@ -125,6 +130,18 @@ class Client:
     @pet.setter
     def pet(self, value: PlayerAttributes.Pet) -> None:
         self.connection.pet = value
+
+    @property
+    def spectator(self) -> bool:
+        return self.connection.spectator
+
+    @spectator.setter
+    def spectator(self, value: bool) -> None:
+        self.connection.spectator = value
+
+    @property
+    def latency(self) -> int:
+        return self.connection.latency
 
     @property
     def _result(self) -> Any:
@@ -223,6 +240,7 @@ class Client:
             port = 22023
 
         try:
+            self.connection.players.ready = False
             await self.connection.connect(name=self.name, host=host, port=port)
 
             while not self.stopped:

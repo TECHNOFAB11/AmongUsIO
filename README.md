@@ -26,10 +26,16 @@ It tries to expose methods for features of the official Among Us client, like me
 Made by reverse engineering with [Wireshark](https://www.wireshark.org/) and by reading the source code of an [unofficial Among Us server][impostor/impostor]
 
 ## Features
-- Supports custom Among Us servers like [Impostor][impostor/impostor]
+- Supports custom Among Us servers like [Impostor][impostor/impostor] 
+  (this server does not support "spectating" though as it's kinda hacky)
 - Join Among Us lobbies
 - Receive and send chat messages
 - Get information about the lobby and the other players
+- Move the character around, for example letting it follow people
+- "Spectate". This makes the connection kind of read only, you cannot move etc.
+  but the Client can receive events like meetings while being completely invisible
+  (one drawback: we still need one player slot for this, as the client technically 
+  counts as a player)
 
 ## Documentation
 - [Stable](https://amongusio.readthedocs.io/en/stable)
@@ -72,6 +78,11 @@ client.run(region="EU")
 Parse Wireshark data and print the parsed packets
 ```sh
 python -m amongus --parse <Wireshark Data (example: 00112233445566)>
+```
+
+For more information:
+```sh
+python -m amongus --help
 ```
 
 [gitlab-repo]: https://gitlab.com/TECHNOFAB/amongusio

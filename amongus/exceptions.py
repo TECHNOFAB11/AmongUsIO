@@ -35,3 +35,15 @@ class ConnectionException(AmongUsException):
         for key, val in kwargs.items():
             setattr(self, key, val)
         super().__init__(self.message)
+
+
+class SpectatorException(AmongUsException):
+    """
+    Exception which gets raised when a function is called that
+    is not possible to do when in spectator mode
+
+    Eg: moving, responding to chat, etc. (everything that needs our net_id's,
+    as they're not available when in spectator mode)
+    """
+
+    pass

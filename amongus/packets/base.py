@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
-from typing import Coroutine, List
+from typing import List
 
 from ..enums import PacketType
 from ..helpers import dotdict, formatHex
@@ -21,7 +21,7 @@ class Packet:
             :meth:`deserialize` and :meth:`__init__` will add values and
             :meth:`serialize` will then use these and serialize them in the right format
         reliable_id (int): If its a reliable packet this will contain the reliable id
-        callback (Coroutine): A coroutine which gets called when the packet was acked
+        callback (callable): A coroutine which gets called when the packet was acked
             by the server
         contained_packets (list): The sub-packets of this packet, as packets
             are nearly always nested
@@ -105,13 +105,15 @@ class Packet:
         packet.parent = self
         self._contained_packets.append(packet)
 
-    def add_callback(self, cb: Coroutine):
+    def add_callback(self, cb: callable):
         """
         Sets the callback which gets run when the packet was acknowledged
 
         Args:
-            cb (Coroutine): A coroutine
+            cb (callable): The method to run as callback, has to be a coroutine
         """
+        if not asyncio.iscoroutinefunction(cb):
+            raise RuntimeError("Callback has to be a coroutine")
         self.callback = cb
 
     def ack(self) -> None:
