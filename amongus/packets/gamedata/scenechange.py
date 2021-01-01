@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from .base import GameDataPacket
 from ...enums import GameDataTag
-from ...helpers import createPacked, writeString
+from ...helpers import createPacked, readPacked, readString, writeString
 
 
 class SceneChangePacket(GameDataPacket):
@@ -14,7 +14,9 @@ class SceneChangePacket(GameDataPacket):
 
     @classmethod
     def parse(cls, data: bytes) -> "SceneChangePacket":
-        raise NotImplementedError
+        client_id, _data = readPacked(data)
+        message, _ = readString(_data)
+        return cls(data, client_id=client_id, message=message)
 
     def serialize(self, getID: callable) -> bytes:
         return (

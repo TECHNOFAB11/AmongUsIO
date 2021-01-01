@@ -338,6 +338,7 @@ class Connection:
                 ]
             )
         )
+
         result = await self.queue.wait_for(
             lambda p: type(p.tag) == MatchMakingTag
             and p.tag == MatchMakingTag.GetGameListV2
@@ -444,7 +445,9 @@ class Connection:
         }
 
         if not await handlers[type(packet.tag)](packet):
-            logger.warning(f"Unhandled packet: {packet}")
+            logger.warning(
+                f"Unhandled packet: {packet}. \n" f"Data: {formatHex(packet.data)}"
+            )
 
     async def on_base_packet(self, packet: Packet):
         if packet.tag == PacketType.Disconnect:
@@ -530,6 +533,15 @@ class Connection:
                     f"Got old movement packet with sequence "
                     f"id {packet.values.sequence_id}"
                 )
+        elif packet.tag == GameDataTag.DespawnFlag:
+            logger.debug(f"Received despawn flag for {packet.values.net_id}")
+            player = self.players.from_net_id(packet.values.net_id)
+            if player is not None:
+                self.players.remove(player)
+                self.eventbus.dispatch("player_leave", player)
+        elif packet.tag == GameDataTag.SceneChangeFlag:
+            logger.debug("Someone else sent a scene change to get a spawn!")
+            # no idea what to do with packet.values.client_id
         else:
             return False
         return True
@@ -553,20 +565,50 @@ class Connection:
             if not self._spectator_reconnected:
                 return True
             logger.debug(f"Received UpdateGameData: {packet}")
-            # i have no idea what this one is for, its just completely empty when i
-            # tested it (only the player id is right, everything else is 0)
-        elif packet.tag == RPCTag.SetName:
-            if packet.values.name is not None:
-                logger.debug(f"Got our name: {packet.values.name}")
-                if self.name != packet.values.name:
-                    self.name = packet.values.name
-                    self.eventbus.dispatch("name_update", self.name)
-        elif packet.tag == RPCTag.SetColor:
-            if PlayerAttributes.Color.has_value(packet.values.color):
-                logger.debug(f"Got color: {packet.values.color}")
-                if self.color != packet.values.color:
-                    self.color = PlayerAttributes.Color(packet.values.color)
-                    self.eventbus.dispatch("color_update", self.color)
+            self.players += packet.values.players
+            self.eventbus.dispatch("players_update", self.players)
+        elif packet.tag in [
+            RPCTag.SetName,
+            RPCTag.SetHat,
+            RPCTag.SetPet,
+            RPCTag.SetColor,
+            RPCTag.SetSkin,
+        ]:
+            validators = {
+                "name": lambda n: n is not None,
+                "color": lambda c: PlayerAttributes.Color.has_value(c),
+                "hat": lambda h: PlayerAttributes.Hat.has_value(h),
+                "pet": lambda p: PlayerAttributes.Pet.has_value(p),
+                "skin": lambda s: PlayerAttributes.Skin.has_value(s),
+            }
+            converters = {
+                "color": PlayerAttributes.Color,
+                "hat": PlayerAttributes.Hat,
+                "pet": PlayerAttributes.Pet,
+                "skin": PlayerAttributes.Skin,
+            }
+            # as these packets only have one value either way we just use that
+            cosmetic = list(packet.values)[0]
+            value = packet.values[cosmetic]
+            logger.debug(f"Received Set{cosmetic}")
+
+            if value is not None and validators[cosmetic](value):
+                # valid
+                if cosmetic in converters.keys():
+                    # convert to enum
+                    value = converters[cosmetic](value)
+
+                if packet.parent.values.net_id in self.net_ids.values():
+                    # for us
+                    if getattr(self, cosmetic) != value:
+                        setattr(self, cosmetic, value)
+                        kwargs = {cosmetic: value}
+                        self.eventbus.dispatch("attribute_update", **kwargs)
+                else:
+                    player = self.players.from_net_id(packet.parent.values.net_id)
+                    if player is not None and getattr(player, cosmetic) != value:
+                        setattr(player, cosmetic, value)
+                        self.eventbus.dispatch("player_update", player)
         else:
             return False
         return True
@@ -577,7 +619,7 @@ class Connection:
             self._player_amount = packet.values.num_players
             self.players += packet.values.players
             if len(self.players) == self._player_amount:
-                self.eventbus.dispatch("player_data_update", list(self.players))
+                self.eventbus.dispatch("players_update", list(self.players))
         elif packet.tag == SpawnTag.PlayerControl:
             logger.debug(f"Received PlayerControl data: {packet}")
             if packet.parent.values.owner == self.client_id:
@@ -700,7 +742,8 @@ class Connection:
         Args:
             payload: bytes; the payload to send
         """
-        logger.debug(f"Sending {len(payload)} bytes: {formatHex(payload)}")
+        if asyncio.get_event_loop().get_debug():
+            logger.debug(f"Sending {len(payload)} bytes: {formatHex(payload)}")
         await self.socket.send(payload)
 
     async def _reader(self) -> None:
@@ -726,7 +769,8 @@ class Connection:
         Args:
             data (bytes): The payload which has been received
         """
-        logger.debug(f"Received {len(data)} bytes: {formatHex(data)}")
+        if asyncio.get_event_loop().get_debug():
+            logger.debug(f"Received {len(data)} bytes: {formatHex(data)}")
         if not self._ready.is_set():
             self._ready.set()
             await self._start_pinging(restart=False)

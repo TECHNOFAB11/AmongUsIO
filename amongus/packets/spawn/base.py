@@ -34,8 +34,10 @@ class SpawnPacket(GameDataPacket):
         if result is not None:
             packet.add_packet(result)
         else:
-            logger.debug(f"Could not find a Spawn packet which can parse '{spawn_id}'")
-            logger.debug(f"Data: {formatHex(_data)}")
+            logger.warning(
+                f"Could not find a Spawn packet which can parse '{spawn_id}'.\n"
+                f"Data: {formatHex(_data)}"
+            )
         return packet
 
     def serialize(self, getID: callable) -> bytes:

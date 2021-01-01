@@ -162,8 +162,10 @@ class Packet:
             if result is not None:
                 packets.append(result)
             else:
-                logger.debug(f"Could not find a packet which can parse '{tag}'")
-                logger.debug(f"Data: {formatHex(data)}")
+                logger.warning(
+                    f"Could not find a packet which can parse '{tag}'.\n"
+                    f"Data: {formatHex(data)}"
+                )
                 data = b""
             first_call = False
         return packets

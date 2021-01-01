@@ -13,7 +13,7 @@ class SetHatPacket(RPCPacket):
 
     @classmethod
     def parse(cls, data: bytes) -> "SetHatPacket":
-        raise NotImplementedError
+        return cls(data, hat=data[0])
 
     def serialize(self, getID: callable) -> bytes:
         return bytes([self.tag, self.values.hat])

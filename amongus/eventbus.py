@@ -20,6 +20,7 @@ class EventBus:
                 callbacks.pop(callback)
 
     def dispatch(self, event: str, *args, **kwargs):
-        logger.debug(f"Dispatching event (on_) '{event}'")
+        if asyncio.get_event_loop().get_debug():
+            logger.debug(f"Dispatching event (on_) '{event}'")
         for cb in self.listeners["on_" + event]:
             asyncio.create_task(cb(*args, **kwargs))

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import collections
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 
 class PacketQueue:
@@ -11,8 +11,7 @@ class PacketQueue:
     places at once
     """
 
-    _new_content = asyncio.Event()
-    _processed_content = asyncio.Event()
+    _listeners: Dict[callable, callable] = {}
 
     def __init__(self, maxlen: int = None):
         """
@@ -23,16 +22,26 @@ class PacketQueue:
                 beyond that length will be deleted (LOFI)
         """
         self._content = collections.deque(maxlen=maxlen)
-        self._processed_content.set()
 
     def clear(self):
         self._content.clear()
 
     async def put(self, item: Any):
         """Adds a new item to the queue."""
-        await self._processed_content.wait()
+        _run = []
         self._content.append(item)
-        self._new_content.set()
+        for _filter, callback in self._listeners.items():
+            if _filter(item):
+                _run.append(callback(item))
+        if len(_run):
+            await asyncio.gather(*_run)
+
+    async def add_listener(self, packet_filter: callable, callback: callable):
+        """
+        Adds a listener whose callback will be called if a new packet passes the
+        packet_filter
+        """
+        self._listeners[packet_filter] = callback
 
     async def wait_for(
         self, packet_filter: Callable, new_only: bool = True, ignore: list = None
@@ -53,15 +62,14 @@ class PacketQueue:
                 if item not in ignore and packet_filter(item):
                     return item
 
-        while True:
-            await self._new_content.wait()
-            self._processed_content.clear()
-            try:
-                item = self._content[-1]
-            except IndexError:
-                pass
-            else:
-                if packet_filter(item):
-                    return item
-            self._new_content.clear()
-            self._processed_content.set()
+        _new_content = asyncio.Event()
+        _data: Any = None
+
+        async def callback(item: Any):
+            nonlocal _data
+            _new_content.set()
+            _data = item
+
+        await self.add_listener(packet_filter, callback)
+        await _new_content.wait()
+        return _data

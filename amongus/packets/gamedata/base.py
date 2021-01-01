@@ -35,10 +35,10 @@ class GameDataPacket(Packet):
             if result is not None:
                 packet.add_packet(result)
             else:
-                logger.debug(
-                    f"Could not find a GameData packet which can parse '{tag}'"
+                logger.warning(
+                    f"Could not find a GameData packet which can parse '{tag}'\n"
+                    f"Data: {formatHex(_data[3 : size + 3])}"
                 )
-                logger.debug(f"Data: {formatHex(_data[3 : size + 3])}")
             _data = _data[size + 3 :]
         return packet, b""
 
@@ -77,10 +77,10 @@ class GameDataToPacket(Packet):
             if result is not None:
                 packet.add_packet(result)
             else:
-                logger.debug(
-                    f"Could not find a GameData packet which can parse '{tag}'"
+                logger.warning(
+                    f"Could not find a GameData packet which can parse '{tag}'\n"
+                    f"Data: {formatHex(_data[3 : size + 3])}"
                 )
-                logger.debug(f"Data: {formatHex(_data[3 : size + 3])}")
             _data = _data[size + 3 :]
         return packet, b""
 

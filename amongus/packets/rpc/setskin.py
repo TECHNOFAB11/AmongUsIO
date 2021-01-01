@@ -13,7 +13,7 @@ class SetSkinPacket(RPCPacket):
 
     @classmethod
     def parse(cls, data: bytes) -> "SetSkinPacket":
-        raise NotImplementedError
+        return cls(data, skin=data[0])
 
     def serialize(self, getID: callable) -> bytes:
         return bytes([self.tag, self.values.skin])

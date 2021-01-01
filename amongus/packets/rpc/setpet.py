@@ -13,7 +13,7 @@ class SetPetPacket(RPCPacket):
 
     @classmethod
     def parse(cls, data: bytes) -> "SetPetPacket":
-        raise NotImplementedError
+        return cls(data, pet=data[0])
 
     def serialize(self, getID: callable) -> bytes:
         return bytes([self.tag, self.values.pet])

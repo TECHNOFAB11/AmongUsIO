@@ -9,7 +9,7 @@ to the server
 from .acknowledgement import AcknowledgePacket
 from .base import Packet
 from .disconnect import DisconnectPacket
-from .gamedata import GameDataPacket, MovementPacket, SceneChangePacket
+from .gamedata import DespawnPacket, GameDataPacket, MovementPacket, SceneChangePacket
 from .hello import HelloPacket
 from .matchmaking import (
     AlterGamePacket,
@@ -72,4 +72,5 @@ __all__ = [
     "SetNamePacket",
     "SetColorPacket",
     "MovementPacket",
+    "DespawnPacket",
 ]

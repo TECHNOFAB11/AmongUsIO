@@ -14,10 +14,10 @@ class Player:
         id (int): The player id
         name (str): The player's name
         color (PlayerAttributes.Color): The player's color
-        hatId (PlayerAttributes.Hat): The player's hat
-        petId (PlayerAttributes.Pet): The player's pet
-        skinId (PlayerAttributes.Skin): The player's skin
-        statusBitField (int): ? TODO
+        hat (PlayerAttributes.Hat): The player's hat
+        pet (PlayerAttributes.Pet): The player's pet
+        skin (PlayerAttributes.Skin): The player's skin
+        statusBitField (int): State of the player (dead etc.)
         tasks (List[Task]): A list of the player's tasks
         net_id (int): The player's net id
     """
@@ -25,9 +25,9 @@ class Player:
     id: int  # noqa: A003
     name: str
     color: PlayerAttributes.Color
-    hatId: PlayerAttributes.Hat
-    petId: PlayerAttributes.Pet
-    skinId: PlayerAttributes.Skin
+    hat: PlayerAttributes.Hat
+    pet: PlayerAttributes.Pet
+    skin: PlayerAttributes.Skin
     statusBitField: int
     tasks: List[Task]
     net_ids: dotdict
@@ -56,9 +56,9 @@ class Player:
         player.id = data[0]
         player.name, _data = readString(data[1:])
         player.color = _data[0]
-        player.hatId, _data = readPacked(_data[1:])
-        player.petId, _data = readPacked(_data)
-        player.skinId, _data = readPacked(_data)
+        player.hat, _data = readPacked(_data[1:])
+        player.pet, _data = readPacked(_data)
+        player.skin, _data = readPacked(_data)
         player.statusBitField = _data[0]
         task_amount = _data[1]
         player.tasks = []
@@ -67,6 +67,18 @@ class Player:
             t, _data = Task.deserialize(_data)
             player.tasks.append(t)
         return player, _data
+
+    def overwrite(self, other: "Player"):
+        if all(x is not None for x in other.net_ids.values()):
+            self.net_ids = other.net_ids
+        self.id = other.id
+        self.name = other.name
+        self.color = other.color
+        self.hat = other.hat
+        self.pet = other.pet
+        self.skin = other.skin
+        self.statusBitField = other.statusBitField
+        self.tasks = other.tasks
 
     def serialize(self) -> bytes:
         pass
@@ -104,11 +116,14 @@ class PlayerList:
                players = PlayerList()
                players += [Player(...), Player(...)]
         """
-        if type(other) == list:
-            for player in other:
+        if type(other) == Player:
+            other = [other]
+        for player in other:
+            if player.id in self.players.keys():
+                # we already have data, overwrite just the new data
+                self.players[player.id].overwrite(player)
+            else:
                 self.players.update({player.id: player})
-        elif type(other) == Player:
-            self.players.update({other.id: other})
         return self
 
     def __iter__(self):
@@ -122,6 +137,12 @@ class PlayerList:
     def __len__(self) -> int:
         """Returns the amount of players in this PlayerList."""
         return len(self.players)
+
+    def remove(self, player: Union[Player, int]) -> Player:
+        """Removes a player"""
+        if type(player) == Player:
+            player = player.id
+        return self.players.pop(player)
 
     def from_net_id(self, net_id: int) -> Player:
         """Returns a player by its net_id or None if no player was found."""

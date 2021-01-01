@@ -28,8 +28,10 @@ class RPCPacket(GameDataPacket):
                 break
 
         if result is None:
-            logger.debug(f"Could not find a RPC packet which can parse '{tag}'")
-            logger.debug(f"Data: {formatHex(_data[1:])}")
+            logger.warning(
+                f"Could not find a RPC packet which can parse '{tag}'.\n"
+                f"Data: {formatHex(_data[1:])}"
+            )
         return cls(data, net_id=net_id, contained_packets=result)
 
     def serialize(self, getID: callable) -> bytes:
