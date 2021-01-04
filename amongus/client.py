@@ -3,13 +3,14 @@
 import asyncio
 import re
 from ipaddress import ip_address
-from typing import Any, Callable, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
+from . import Player
 from .connection import Connection
 from .enums import GameSettings, PlayerAttributes
 from .eventbus import EventBus
 from .exceptions import AmongUsException
-from .game import GameList
+from .game import Game, GameList
 from .regions import regions
 
 
@@ -27,6 +28,8 @@ class Client:
         pet (PlayerAttributes.Pet): Pet of the character
         spectator (bool): Whether the Client should behave like a normal player
             or just "spectate" and remain invisible
+        game (Game): The current game
+        players (List[Player]): Players in the current game
     """
 
     connection: Connection
@@ -142,6 +145,14 @@ class Client:
     @property
     def latency(self) -> int:
         return self.connection.latency
+
+    @property
+    def game(self) -> Game:
+        return self.connection.game
+
+    @property
+    def players(self) -> List[Player]:
+        return list(self.connection.players)
 
     @property
     def _result(self) -> Any:
@@ -273,7 +284,7 @@ class Client:
 
     async def find_games(
         self,
-        mapId: GameSettings.Map = GameSettings.Map.All,
+        mapId: GameSettings.SearchMap = GameSettings.SearchMap.All,
         impostors: int = 0,
         language: GameSettings.Keywords = GameSettings.Keywords.All,
     ) -> GameList:
@@ -281,7 +292,7 @@ class Client:
         Returns the currently open games/lobbies
 
         Args:
-            mapId (GameSettings.Map): The wanted map
+            mapId (GameSettings.SearchMap): The wanted map
             impostors (int): Amount of impostors (0-3, 0 being Any)
             language (GameSettings.Keywords): Which language the chat should be
 

@@ -22,7 +22,10 @@ class GetGameListV2Packet(Packet):
 
     @classmethod
     def create(
-        cls, mapId: GameSettings.Map, impostors: int, language: GameSettings.Keywords
+        cls,
+        mapId: GameSettings.SearchMap,
+        impostors: int,
+        language: GameSettings.Keywords,
     ) -> "GetGameListV2Packet":
         return cls(b"", mapId=mapId, impostors=impostors, keywords=language)
 

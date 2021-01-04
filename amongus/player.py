@@ -19,7 +19,8 @@ class Player:
         skin (PlayerAttributes.Skin): The player's skin
         statusBitField (int): State of the player (dead etc.)
         tasks (List[Task]): A list of the player's tasks
-        net_id (int): The player's net id
+        net_ids (dotdict): The player's net ids
+        client_id (int): The player's client/owner id
     """
 
     id: int  # noqa: A003
@@ -28,11 +29,15 @@ class Player:
     hat: PlayerAttributes.Hat
     pet: PlayerAttributes.Pet
     skin: PlayerAttributes.Skin
-    statusBitField: int
+    statusBitField: int = 0
     tasks: List[Task]
     net_ids: dotdict
-    position: Tuple[int, int]
-    velocity: Tuple[int, int]
+    client_id: int = None
+    position: Tuple[int, int] = None
+    velocity: Tuple[int, int] = None
+    death_position: Tuple[int, int] = None
+    host: bool = False
+    impostor: bool = False
 
     def __repr__(self):
         """
@@ -68,6 +73,10 @@ class Player:
             player.tasks.append(t)
         return player, _data
 
+    @property
+    def dead(self):
+        return (self.statusBitField & 4) != 0
+
     def overwrite(self, other: "Player"):
         if all(x is not None for x in other.net_ids.values()):
             self.net_ids = other.net_ids
@@ -79,6 +88,9 @@ class Player:
         self.skin = other.skin
         self.statusBitField = other.statusBitField
         self.tasks = other.tasks
+        self.client_id = other.client_id
+        self.host = other.host
+        self.death_position = other.death_position
 
     def serialize(self) -> bytes:
         pass
@@ -148,6 +160,13 @@ class PlayerList:
         """Returns a player by its net_id or None if no player was found."""
         players = list(
             filter(lambda p: net_id in p.net_ids.values(), self.players.values())
+        )
+        return players[0] if len(players) else None
+
+    def from_client_id(self, client_id: int) -> Player:
+        """Returns a player by its client_id/owner_id or None if no player was found."""
+        players = list(
+            filter(lambda p: client_id == p.client_id, self.players.values())
         )
         return players[0] if len(players) else None
 

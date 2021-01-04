@@ -122,6 +122,73 @@ class SpawnTag(AmongUsEnum):
     ShipStatus3 = 7
 
 
+class DataFlag(AmongUsEnum):
+    Control = 0
+    Physics = 1
+    Network = 2
+    Sabotage = 3
+
+
+class ChatNoteType(AmongUsEnum):
+    DidVote = 0
+
+
+class TaskType(AmongUsEnum):
+    SubmitScan = 0
+    PrimeShields = 1
+    FuelEngines = 2
+    ChartCourse = 3
+    StartReactor = 4
+    SwipeCard = 5
+    ClearAsteroids = 6
+    UploadData = 7
+    InspectSample = 8
+    EmptyChute = 9
+    EmptyGarbage = 10
+    AlignEngineOutput = 11
+    FixWiring = 12
+    CalibrateDistributor = 13
+    DivertPower = 14
+    UnlockManifolds = 15
+    ResetReactor = 16
+    FixLights = 17
+    Filter = 18
+    FixComms = 19
+    RestoreOxy = 20
+    StabilizeSteering = 21
+    AssembleArtifact = 22
+    SortSamples = 23
+    MeasureWeather = 24
+    EnterIdCode = 25
+    BuyBeverage = 26
+    ProcessData = 27
+    RunDiagnostics = 28
+    WaterPlants = 29
+    MonitorOxygen = 30
+    StoreArtifact = 31
+    FillCanisters = 32
+    ActivateWeatherNodes = 33
+    InsertKeys = 34
+    ResetSeismic = 35
+    ScanBoardingPass = 36
+    OpenWaterways = 37
+    ReplaceWaterJug = 38
+    RepairDrill = 39
+    AlignTelescope = 40
+    RecordTemperature = 41
+    RebootWifi = 42
+
+
+class GameOverReason(AmongUsEnum):
+    HumansByVote = 0
+    HumansByTask = 1
+    ImpostorByVote = 2
+    ImpostorByKill = 3
+    ImpostorBySabotage = 4
+    ImpostorDisconnect = 5
+    HumansDisconnect = 6
+
+
 class GameSettings:
     class Map(AmongUsEnum):
         """MapIds of Among Us"""
@@ -129,12 +196,14 @@ class GameSettings:
         Skeld = 0
         MiraHQ = 1
         Polus = 2
-        All = 7
-        # TODO: when searching for games it looks like this:
-        #   Skeld = 1, MiraHQ = 2, Polus = 4
-        #   thus All = Skeld | MiraHQ | Polus = 7
-        #   but when receiving game data its 0, 1, 2
-        #   -> create two enums??
+
+    class SearchMap(AmongUsEnum):
+        """MapIds for searching games"""
+
+        Skeld = 1
+        MiraHQ = 2
+        Polus = 4
+        All = Skeld | MiraHQ | Polus
 
     class Keywords(AmongUsEnum):
         """Available languages to filter by when searching for games/lobbies"""

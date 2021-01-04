@@ -10,6 +10,7 @@
 [![project version](https://img.shields.io/pypi/v/amongus?label=PyPi&logo=pypi&color=%23FFD43B&logoColor=white)](https://pypi.org/project/amongus/)
 [![discord](https://img.shields.io/discord/747858042007060613?color=7289da&label=Discord&logo=discord&logoColor=white)](https://tecf.de/amongusio-discord)
 [![made with python](https://img.shields.io/badge/Made%20with-Python-007ec6.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![license](https://img.shields.io/pypi/l/amongus?label=License&logo=internet-archive&logoColor=white)](https://choosealicense.com/licenses/gpl-3.0/)
 [![black](https://img.shields.io/badge/Code%20Style-black-000.svg)](https://github.com/psf/black)
 
 </div>
@@ -44,7 +45,7 @@ Made by reverse engineering with [Wireshark](https://www.wireshark.org/) and by 
 ## Installation
 ```sh
 # currently only released on testpypi by CI
-python -m pip install --index-url https://test.pypi.org/simple/ amongusio
+python -m pip install --index-url https://test.pypi.org/simple/ amongus
 ```
 
 Development version:

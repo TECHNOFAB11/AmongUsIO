@@ -5,12 +5,12 @@
 
 from .base import GameDataPacket
 from .despawn import DespawnPacket
-from .movement import MovementPacket
+from .ready import ReadyPacket
 from .scenechange import SceneChangePacket
 
 __all__ = [
     "GameDataPacket",
     "DespawnPacket",
-    "MovementPacket",
+    "ReadyPacket",
     "SceneChangePacket",
 ]

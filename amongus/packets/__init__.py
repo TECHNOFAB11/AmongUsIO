@@ -8,15 +8,18 @@ to the server
 
 from .acknowledgement import AcknowledgePacket
 from .base import Packet
+from .dataflag import DataFlagPacket, MovementPacket
 from .disconnect import DisconnectPacket
-from .gamedata import DespawnPacket, GameDataPacket, MovementPacket, SceneChangePacket
+from .gamedata import DespawnPacket, GameDataPacket, ReadyPacket, SceneChangePacket
 from .hello import HelloPacket
 from .matchmaking import (
     AlterGamePacket,
+    EndGamePacket,
     GetGameListV2Packet,
     JoinGamePacket,
     JoinedGamePacket,
     RedirectPacket,
+    RemovePlayerPacket,
     ReselectServerPacket,
     StartGamePacket,
 )
@@ -25,16 +28,25 @@ from .reliable import ReliablePacket
 from .rpc import (
     CheckColorPacket,
     CheckNamePacket,
+    ClosePacket,
+    MurderPlayerPacket,
     RPCPacket,
+    ReportDeadBodyPacket,
+    SendChatNotePacket,
     SendChatPacket,
     SetColorPacket,
     SetHatPacket,
+    SetInfectedPacket,
     SetNamePacket,
     SetPetPacket,
     SetSkinPacket,
     SetStartCounterPacket,
+    SetTasksPacket,
+    SnapToPacket,
+    StartMeetingPacket,
     SyncSettingsPacket,
     UpdateGameDataPacket,
+    VotingCompletePacket,
 )
 from .spawn import GameDataSpawnPacket, PlayerControlSpawnPacket, SpawnPacket
 from .unreliable import UnreliablePacket
@@ -71,6 +83,19 @@ __all__ = [
     "SetSkinPacket",
     "SetNamePacket",
     "SetColorPacket",
-    "MovementPacket",
+    "DataFlagPacket",
     "DespawnPacket",
+    "ReadyPacket",
+    "SetInfectedPacket",
+    "SetTasksPacket",
+    "MurderPlayerPacket",
+    "ReportDeadBodyPacket",
+    "StartMeetingPacket",
+    "VotingCompletePacket",
+    "ClosePacket",
+    "SnapToPacket",
+    "SendChatNotePacket",
+    "MovementPacket",
+    "EndGamePacket",
+    "RemovePlayerPacket",
 ]
