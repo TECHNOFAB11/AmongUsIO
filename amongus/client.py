@@ -5,7 +5,7 @@ import re
 from ipaddress import ip_address
 from typing import Any, Callable, List, Tuple, Union
 
-from . import Player
+from .player import Player
 from .connection import Connection
 from .enums import GameSettings, PlayerAttributes
 from .eventbus import EventBus
