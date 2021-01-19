@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import re
+import setuptools
 from setuptools import setup
 
 with open('requirements.txt') as f:
@@ -43,10 +44,7 @@ setup(
     author_email='amongusio.git@technofab.de',
     url='https://gitlab.com/TECHNOFAB/amongusio',
     license='GPL-3.0',
-    packages=[
-        'amongus', 'amongus.packets', 'amongus.packets.matchmaking',
-        'amongus.packets.rpc', 'amongus.packets.gamedata', 'amongus.packets.spawn'
-    ],
+    packages=setuptools.find_packages(),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

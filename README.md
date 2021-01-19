@@ -12,6 +12,7 @@
 [![made with python](https://img.shields.io/badge/Made%20with-Python-007ec6.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![license](https://img.shields.io/pypi/l/amongus?label=License&logo=internet-archive&logoColor=white)](https://choosealicense.com/licenses/gpl-3.0/)
 [![black](https://img.shields.io/badge/Code%20Style-black-000.svg)](https://github.com/psf/black)
+[![gitter](https://img.shields.io/gitter/room/technofab/amongusio?label=Chat&logo=gitter)](https://gitter.im/TECHNOFAB-amongusio/community)
 
 </div>
 
