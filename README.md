@@ -16,6 +16,14 @@
 
 </div>
 
+## No active development
+I currently dont have a lot of time in which i could work on this library due to things like school.
+I use the time i have to work on some private projects in which i hopefully can use this library
+in the future, which will allow me to find bugs and issues more quickly.
+I'm open to contributions and feedback/issues and am still trying to fix them as quickly as possible :)
+Please check out [CONTRIBUTING.md](CONTRIBUTING.md) if you want to contribute code.
+I will be working on this more when i have time again, ETA around july (when im done with school).
+
 ## Note
 > This repository is mirrored from [Gitlab][gitlab-repo] to [Github][github-repo].
 > Most features like Issues, MRs/PRs etc. are disabled on [Github][github-repo], please use the
