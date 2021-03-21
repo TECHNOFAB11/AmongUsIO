@@ -214,7 +214,7 @@ class Client:
 
         return decorator(name) if callable(name) else decorator
 
-    async def start(self, region: str = None, custom_server: str = None) -> Any:
+    async def start(self, region: str = None, custom_server: str = None, **kwargs) -> Any:
         """
         Starts the client, connecting to the server and sleeping until disconnect
 
@@ -248,11 +248,11 @@ class Client:
                 raise AmongUsException("custom_server ip could not be parsed!") from e
         else:
             host = regions[region]
-            port = 22023
-
+            port = kwargs.get('port', 22023)
+            gameVersion = kwargs.get('gameVersion', (2021, 3, 5))
         try:
             self.connection.players.ready = False
-            await self.connection.connect(name=self.name, host=host, port=port)
+            await self.connection.connect(name=self.name, host=host, port=port, gameVersion=gameVersion)
 
             while not self.stopped:
                 # only exit when we lost connection or disconnected in some other way
