@@ -300,10 +300,10 @@ class Client:
             :class:`GameList`
 
         Raises:
-            AmongUsException: Amount of impostors is not between 0 and 3
+            AmongUsException: Amount of impostors is not between 1 and 3
         """
-        if impostors not in range(3):
-            raise AmongUsException("Amount of impostors has to be between 0 and 3!")
+        if impostors not in range(1, 4):
+            raise AmongUsException("Amount of impostors has to be between 1 and 3!")
         return await self.connection.find_games(mapId, impostors, language)
 
     async def stop(self, force: bool = False) -> None:
