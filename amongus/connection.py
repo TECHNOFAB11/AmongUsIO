@@ -142,8 +142,7 @@ class Connection:
         """The current player (/ourselves)"""
         return self.players.from_client_id(self.client_id)
 
-    async def connect(self, name: str, host: str, port: int = 22023,
-                      gameVersion: tuple = (2021, 3, 5)) -> None:
+    async def connect(self, name: str, host: str, port: int = 22023, gameVersion: tuple = None) -> None:
         """
         Connects to the given server via UDP and starts listening for data on success
 
@@ -151,7 +150,7 @@ class Connection:
             name (str): Name which will be displayed in Among Us
             host (str): Host/address of the server to connect to
             port (int): Port of the server to connect to, defaults to 22023
-            gameVersion: (tuple): The version of the game running on the server
+            gameVersion (tuple): The version of the game running on the server
 
         Raises:
             Exception: Something went wrong, never happened while testing

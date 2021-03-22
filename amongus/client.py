@@ -214,7 +214,8 @@ class Client:
 
         return decorator(name) if callable(name) else decorator
 
-    async def start(self, region: str = None, custom_server: str = None, **kwargs) -> Any:
+    async def start(self, region: str = None, custom_server: str = None,
+                    port: int = 22023, gameVersion: tuple = (2021, 3, 5)) -> Any:
         """
         Starts the client, connecting to the server and sleeping until disconnect
 
@@ -223,6 +224,9 @@ class Client:
                 see :attr:`amongus.regions.regions`
             custom_server (str): Optional; A custom address to connect to, either this
                 or region has to be given. Example: `10.1.1.1:22023` or `10.1.1.1`
+            port (int): Optional; Port of the server to connect to, defaults to 22023
+            gameVersion (tuple): Optional; The version of the game running on the server
+
 
         Raises:
             ConnectionException: Server disconnected,
@@ -234,7 +238,6 @@ class Client:
             raise AmongUsException(f"The region {region} does not exist!")
 
         self.region = region
-
         if custom_server is not None:
             host, s, port = custom_server.rpartition(":")
             if not s:
@@ -248,8 +251,6 @@ class Client:
                 raise AmongUsException("custom_server ip could not be parsed!") from e
         else:
             host = regions[region]
-            port = kwargs.get('port', 22023)
-            gameVersion = kwargs.get('gameVersion', (2021, 3, 5))
         try:
             self.connection.players.ready = False
             await self.connection.connect(name=self.name, host=host, port=port, gameVersion=gameVersion)
