@@ -51,6 +51,10 @@ deploy:testpypi:
     TWINE_PASSWORD: $TESTPYPI_TOKEN
   script:
     - twine upload --repository testpypi dist/*
+  rules:
+    - if: '$CI_COMMIT_REF_SLUG == "master" && $TESTPYPI_TOKEN != null'
+      when: on_success
+    - when: never
 
 # Deploy package to PyPi
 deploy:pypi:
@@ -62,5 +66,7 @@ deploy:pypi:
     TWINE_PASSWORD: $PYPI_TOKEN
   script:
     - twine upload dist/*
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG != null && $PYPI_TOKEN != null'
+      when: on_success
+    - when: never
