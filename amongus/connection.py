@@ -88,6 +88,7 @@ class Connection:
     pet: PlayerAttributes.Pet
     spectator: bool
     host: str = None
+    gameVersion: tuple = None
     port: int = None
     lobby_code: str = None
     region: str = None
